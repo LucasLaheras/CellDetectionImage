@@ -7,9 +7,16 @@ from matplotlib import pyplot as plt
 def CellDetectionImage(im0):
     # cnversão pra tons de cinza
     im1 = cv2.cvtColor(im0, cv2.COLOR_BGR2GRAY)
+    histograma(im1)
+
+    mostra(im1)
 
     # equalização histogramica global
     im1 = cv2.equalizeHist(im1)
+
+    histograma(im1)
+
+    mostra(im1)
 
     # max(max(im1))
     print(max([valor for linha in im1 for valor in linha]))
@@ -20,6 +27,8 @@ def CellDetectionImage(im0):
 
     # histograma
     H = psrGrayHistogram(im1)
+
+    print(H)
 
     # segmentação binaria com firefly
 
@@ -51,6 +60,20 @@ def unique(image):
 
     return
 
+def histograma(image):
+
+    hist, bins = np.histogram(image.flatten(), 256, [0, 256])
+    cdf = hist.cumsum()
+
+    cdf_normalized = cdf * hist.max() / cdf.max()
+    plt.plot(cdf_normalized, 'b')
+    plt.hist(image.flatten(), 256, [0, 256], 'r')
+    plt.xlim([0, 256])
+    plt.legend(('cdf', 'histogram'), 'upper left')
+    plt.show()
+
+    return
+
 
 def mostra(img, name='Name'):
     cv2.namedWindow(name, cv2.WINDOW_NORMAL)
@@ -58,3 +81,26 @@ def mostra(img, name='Name'):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     return
+
+def pshisteq(im1):
+    H = psrGrayHistogram(im1)
+
+    for i in range(254):
+        H[i+1] = H[i+1] + H[i]
+
+    lin, col = im1.shape
+
+    ime = []
+    imeq = []
+    for i in range(lin):
+        ime.append(0)
+
+    for i in range(col):
+        imeq.append(ime)
+
+    for y in range(lin):
+        for x in range(col):
+            imeq[y][x] = round(H[im1[y, x]]*255)/255
+            print(imeq[y][x])
+
+    return imeq
