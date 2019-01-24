@@ -2,10 +2,11 @@ import cv2
 import numpy as np
 from psrGrayHistogram import psrGrayHistogram
 from matplotlib import pyplot as plt
+import SwarmPackagePy
 
 
 def CellDetectionImage(im0):
-    # cnversão pra tons de cinza
+    # conversão pra tons de cinza
     im1 = cv2.cvtColor(im0, cv2.COLOR_BGR2GRAY)
 
     # equalização histogramica global
@@ -18,6 +19,9 @@ def CellDetectionImage(im0):
     print(H)
 
     # segmentação binaria com firefly
+    bests = SwarmPackagePy.fa.get_Gbest(SwarmPackagePy.fa(100, H, 0, 255, 1024, 0.1))
+
+    print(bests)
 
     # multisegmentação
 
@@ -25,6 +29,19 @@ def CellDetectionImage(im0):
     Lin, Col = im1.shape
     kernel = np.ones((Lin, Col), np.uint8)
     im2 = cv2.dilate(im1, kernel, 3)
+
+
+    # obtem somente a maior região = região de interesse
+
+    # separa somente a maior região de interesse
+
+    # histograma na região de interesse
+
+    # level-set somente na rtegião de interesse
+
+    # normalização
+
+    # colorização randomica das regiões de interesse
 
     return
 
