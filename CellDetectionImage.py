@@ -10,7 +10,7 @@ def CellDetectionImage(im0):
     im1 = cv2.cvtColor(im0, cv2.COLOR_BGR2GRAY)
 
     # equalização histogramica global
-    im1 = pshisteq(im1)
+    im1 = lplHisteq(im1)
     mostra(im1)
 
     # histograma
@@ -64,6 +64,7 @@ def unique(image):
 
     return
 
+
 def histograma(image):
 
     hist, bins = np.histogram(image.flatten(), 256, [0, 256])
@@ -91,7 +92,7 @@ def maxmax(image):
     print(max([valor for linha in image for valor in linha]))
 
 
-def pshisteq(im1):
+def lplHisteq(im1):
     H = psrGrayHistogram(im1)
 
     for i in range(255):
