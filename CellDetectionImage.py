@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from psrGrayHistogram import psrGrayHistogram
 from matplotlib import pyplot as plt
-import SwarmPackagePy
+from lplFirefly import lplFirefly
 
 
 def CellDetectionImage(im0):
@@ -19,7 +19,7 @@ def CellDetectionImage(im0):
     print(H)
 
     # segmentação binaria com firefly
-    bests = SwarmPackagePy.fa.get_Gbest(SwarmPackagePy.fa(100, H, 0, 255, 1024, 0.1))
+    bests = lplFirefly(50, 3, 0.5, 0.9, 0.5, 20, H)
 
     print(bests)
 

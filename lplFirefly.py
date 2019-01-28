@@ -14,7 +14,8 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
     """
 
     t = 0
-    alpha0 = 1.0
+    alphat = 1.0
+    bests = [0]*d
 
     randommatrix = []
 
@@ -23,28 +24,42 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
         threshold.sort()
         randommatrix.append(threshold)
 
-    r = []
     lin = [0]*n
     r = [lin]*n
 
-    Z = []
-    Z.append(0*n)
+    Z = [0]*n
 
-    while(t < maxGenerarion):
+    while t < maxGenerarion:
+        print(t)
         for i in range(n):
             for j in range(n):
-                Z[i] = psrAvaliacaoShannon(H, randommatrix[i])
                 Z[j] = psrAvaliacaoShannon(H, randommatrix[j])
+                Z[i] = psrAvaliacaoShannon(H, randommatrix[i])
                 r[i][j] = math.sqrt((Z[i] - Z[j]) ** 2)
+        for i in range(n):
+            Z[i] = psrAvaliacaoShannon(H, randommatrix[i])
+            for j in range(i, n):
+                if Z[i] < Z[j]:
+                    threshold = random.sample(range(1, 255), d)
+                    threshold.sort()
+
+                    alphat = alpha * alphat
+                    betat = beta/math.exp(-gamma*(r[i][j]**2))
+
+                    for k in range(d):
+                        randommatrix[i][k] = int((1-betat)*randommatrix[i][k] + betat*randommatrix[j][k] +
+                                                 alphat*threshold[k])
 
         for i in range(n):
-            # bright evaluation Z[fi]
-            for j in range(n):
-                if Z[i] < Z[j]:
-                    Z[i], Z[j] = Z[j], Z[i]
+            Z[i] = psrAvaliacaoShannon(H, randommatrix[i])
 
-            threshold = random.sample(range(1, 255), d)
-            threshold.sort()
+        bigger = 0
+
+        for i in range(1, n):
+            if Z[bigger] < Z[i]:
+                bigger = i
+
+        bests = randommatrix[bigger]
 
         t += 1
 
@@ -61,12 +76,15 @@ def psrAvaliacaoShannon(histograma, elemento):
 
     light = ShannonEntropy(histograma, a, b)
 
-    for i in range(n):
+    for i in range(1, n - 1):
         a = elemento[i] + 1
         b = elemento[i + 1]
 
         ES = ShannonEntropy(histograma, a, b)
         light += ES
+
+    elemento.remove(0)
+    elemento.remove(255)
 
     return light
 
