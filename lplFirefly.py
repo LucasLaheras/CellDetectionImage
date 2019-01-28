@@ -24,10 +24,8 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
         randommatrix.append(threshold)
 
     r = []
-    lin = []
-    lin.append(0*n)
-    for i in range(n):
-        r.append(lin)
+    lin = [0]*n
+    r = [lin]*n
 
     Z = []
     Z.append(0*n)
@@ -42,7 +40,7 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
         for i in range(n):
             # bright evaluation Z[fi]
             for j in range(n):
-                if (Z[i] < Z[j]):
+                if Z[i] < Z[j]:
                     Z[i], Z[j] = Z[j], Z[i]
 
             threshold = random.sample(range(1, 255), d)
@@ -56,7 +54,7 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
 def psrAvaliacaoShannon(histograma, elemento):
     elemento.insert(0, 0)
     elemento.append(255)
-    n  = len(elemento)
+    n = len(elemento)
 
     a = elemento[0]
     b = elemento[1]
@@ -73,8 +71,8 @@ def psrAvaliacaoShannon(histograma, elemento):
     return light
 
 
-def ShannonEntropy(histograma, a , b):
-    H = histograma[a : b]
+def ShannonEntropy(histograma, a, b):
+    H = histograma[a:b]
     L = len(H)
     S = 0
 
