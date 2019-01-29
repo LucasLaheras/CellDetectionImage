@@ -25,16 +25,31 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
         threshold.sort()
         randommatrix.append(threshold)
 
-    lin = [0]*n
-    r = [lin]*n
+    randommatrix = [[127, 207],
+                    [74, 250],
+                    [171, 4],
+                    [243, 208],
+                    [195, 158],
+                    [169, 142],
+                    [33, 62],
+                    [24, 209],
+                    [4, 67],
+                    [73, 191]]
+
+    r = []
+    for i in range(n):
+        lin = [0.0]*n
+        r.append(lin)
 
     Z = [0]*n
 
     while t < maxGenerarion:
         for i in range(n):
-            for j in range(n):
-                Z[j] = psrAvaliacaoShannon(H, randommatrix[j])
-                Z[i] = psrAvaliacaoShannon(H, randommatrix[i])
+            for j in range(i+1, n):
+                if Z[j] == 0:
+                    Z[j] = psrAvaliacaoShannon(H, randommatrix[j])
+                if Z[i] == 0:
+                    Z[i] = psrAvaliacaoShannon(H, randommatrix[i])
                 r[i][j] = math.sqrt((Z[i] - Z[j]) ** 2)
         for i in range(n):
             Z[i] = psrAvaliacaoShannon(H, randommatrix[i])
@@ -44,13 +59,16 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
                     threshold.sort()
 
                     alphat = alpha * alphat
-                    betat = beta/math.exp(-gamma*(r[i][j]**2))
+                    betat = beta*math.exp(-gamma*((r[i][j])**2))
 
-                    print(str(betat) + " " + str(alphat))
+                    print(str(betat) + " " + str(alphat) + " " + str(gamma))
 
                     for k in range(d):
-                        randommatrix[i][k] = int((1-betat)*randommatrix[i][k] + betat*randommatrix[j][k] +
+                        randommatrix[i][k] = int((1 - betat)*randommatrix[i][k] + betat*randommatrix[j][k] +
                                                  alphat*threshold[k])
+                        #randommatrix[i][k] = (1 - betat) * randommatrix[i][k] + betat * (randommatrix[i][k]) + \
+                        #                     threshold[k]
+                        #randommatrix[i][k] = int(randommatrix[i][k] / (1 + alphat))
 
         for i in range(n):
             Z[i] = psrAvaliacaoShannon(H, randommatrix[i])
@@ -75,14 +93,17 @@ def psrAvaliacaoShannon(histograma, elemento):
 
     a = elemento[0]
     b = elemento[1]
+    print(str(a) + " " + str(b))
 
     light = ShannonEntropy(histograma, a, b)
 
-    for i in range(1, n - 1):
+    for i in range(n - 1):
         a = elemento[i] + 1
         b = elemento[i + 1]
+        print(str(a) + " " + str(b))
 
         ES = ShannonEntropy(histograma, a, b)
+        print(ES)
         light += ES
 
     elemento.remove(0)
@@ -93,6 +114,9 @@ def psrAvaliacaoShannon(histograma, elemento):
 
 def ShannonEntropy(histograma, a, b):
     H = histograma[a:b]
+    s = sum(H)
+    if s > 0:
+        H = [float(i) / s for i in H]
     L = len(H)
     S = 0
 
