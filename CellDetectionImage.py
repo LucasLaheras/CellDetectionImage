@@ -3,6 +3,7 @@ import numpy as np
 from psrGrayHistogram import psrGrayHistogram
 from matplotlib import pyplot as plt
 from lplFirefly import lplFirefly
+from psrMultiLimiarizacao import psrMultiLimiarizacao
 
 
 def CellDetectionImage(im0):
@@ -16,14 +17,13 @@ def CellDetectionImage(im0):
     # histograma
     H = psrGrayHistogram(im1)
 
-    print(H)
-
     # segmentação binaria com firefly
-    bests = lplFirefly(50, 3, 0.5, 0.9, 0.5, 20, H)
+    bests = lplFirefly(10, 2, 0.5, 0.9, 0.5, 20, H)
 
     print(bests)
 
     # multisegmentação
+    # im2 = psrMultiLimiarizacao(im1, bests)
 
     # 3x dilatação binaria
     Lin, Col = im1.shape

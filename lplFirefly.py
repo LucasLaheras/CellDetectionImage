@@ -16,6 +16,7 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
     t = 0
     alphat = 1.0
     bests = [0]*d
+    random.seed(0)  # gera sempre os mesmos numeros aleatorios
 
     randommatrix = []
 
@@ -30,7 +31,6 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
     Z = [0]*n
 
     while t < maxGenerarion:
-        print(t)
         for i in range(n):
             for j in range(n):
                 Z[j] = psrAvaliacaoShannon(H, randommatrix[j])
@@ -45,6 +45,8 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
 
                     alphat = alpha * alphat
                     betat = beta/math.exp(-gamma*(r[i][j]**2))
+
+                    print(str(betat) + " " + str(alphat))
 
                     for k in range(d):
                         randommatrix[i][k] = int((1-betat)*randommatrix[i][k] + betat*randommatrix[j][k] +
