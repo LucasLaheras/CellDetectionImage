@@ -45,15 +45,14 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
 
     while t < maxGenerarion:
         for i in range(n):
+            Z[i] = psrAvaliacaoShannon(H, randommatrix[i])
+
+        for i in range(n):
             for j in range(i+1, n):
-                if Z[j] == 0:
-                    Z[j] = psrAvaliacaoShannon(H, randommatrix[j])
-                if Z[i] == 0:
-                    Z[i] = psrAvaliacaoShannon(H, randommatrix[i])
-                r[i][j] = math.sqrt((Z[i] - Z[j]) ** 2)
+                r[i][j] = int(math.sqrt(sum((Z[i] - Z[j]) ** 2)))
         for i in range(n):
             Z[i] = psrAvaliacaoShannon(H, randommatrix[i])
-            for j in range(i, n):
+            for j in range(i+1, n):
                 if Z[i] < Z[j]:
                     threshold = random.sample(range(1, 255), d)
                     threshold.sort()
@@ -88,16 +87,16 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
 
 def psrAvaliacaoShannon(histograma, elemento):
     elemento.insert(0, 0)
-    elemento.append(255)
+    elemento.append(256)
     n = len(elemento)
 
-    a = elemento[0]
+    a = elemento[0]+1
     b = elemento[1]
     print(str(a) + " " + str(b))
 
     light = ShannonEntropy(histograma, a, b)
 
-    for i in range(n - 1):
+    for i in range(1, n - 1):
         a = elemento[i] + 1
         b = elemento[i + 1]
         print(str(a) + " " + str(b))
@@ -107,13 +106,13 @@ def psrAvaliacaoShannon(histograma, elemento):
         light += ES
 
     elemento.remove(0)
-    elemento.remove(255)
+    elemento.remove(256)
 
     return light
 
 
 def ShannonEntropy(histograma, a, b):
-    H = histograma[a:b]
+    H = histograma[a:b+1]
     s = sum(H)
     if s > 0:
         H = [float(i) / s for i in H]
@@ -122,7 +121,7 @@ def ShannonEntropy(histograma, a, b):
 
     for i in range(L):
         if H[i] != 0:
-            S += H[i] * math.log10(H[i])
+            S += H[i] * math.log(H[i])
 
     S *= -1
 
