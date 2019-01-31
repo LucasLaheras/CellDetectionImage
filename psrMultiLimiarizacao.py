@@ -3,7 +3,7 @@ def psrMultiLimiarizacao(im, limiares):
     limiares.insert(0, 0)
     limiares.append(255)
 
-    im1 = im
+    im1 = im.copy()
 
     L = len(limiares)
 
