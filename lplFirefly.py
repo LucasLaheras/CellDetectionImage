@@ -17,7 +17,7 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
     t = 0
     alphat = 1.0
     bests = [0]*d
-    # random.seed(0)  # gera sempre os mesmos numeros aleatorios
+    random.seed(0)  # gera sempre os mesmos numeros aleatorios
 
     randommatrix = []
 
@@ -26,7 +26,7 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
         threshold.sort()
         randommatrix.append(threshold)
 
-    #/
+    """""
     randommatrix = [[127, 207],
                     [74, 250],
                     [171, 4],
@@ -40,7 +40,7 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
 
     for i in range(n):
         randommatrix[i].sort()
-    #\
+    #"""""
 
     r = []
     for i in range(n):
@@ -49,7 +49,7 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
 
     Z = [0]*n
 
-    cont = 0
+    # cont = 0
 
     while t < maxGenerarion:
         for i in range(n):
@@ -73,13 +73,13 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
         for i in range(n):
             for j in range(n):
                 if Z[i] < Z[j]:
-                    print("entrou")
+                    # print("entrou")
                     threshold = random.sample(range(1, 255), d)
                     threshold.sort()
-                    cont += 1
+                    # cont += 1
 
                     betat = beta*math.exp(-gamma*((r[i][j])**2))
-                    print(betat)
+                    # print(betat)
 
                     if i != n-1:
 
@@ -97,7 +97,7 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
         t += 1
 
     bests.sort()
-    print(cont)
+    # print(cont)
 
     return bests
 
