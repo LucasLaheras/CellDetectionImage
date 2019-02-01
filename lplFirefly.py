@@ -35,7 +35,6 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
 
     Z = [0]*n
 
-
     while t < maxGenerarion:  # Start itarations
         for i in range(n):
             Z[i] = -psrAvaliacaoShannon(H, fireflies[i])
@@ -72,9 +71,9 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
                         for k in range(d):
                             fireflies[i][k] = int(((1 - betat)*fireflies[i][k] + betat*fireflies[j][k] +
                                                      alphat*threshold[k])/(1+alphat))
-                            #fireflies[i][k] = (1 - betat) * fireflies[i][k] + betat * (fireflies[i][k]) + \
+                            # fireflies[i][k] = (1 - betat) * fireflies[i][k] + betat * (fireflies[i][k]) + \
                             #                     threshold[k]
-                            #fireflies[i][k] = int(fireflies[i][k] / (1 + alphat))
+                            # fireflies[i][k] = int(fireflies[i][k] / (1 + alphat))
 
         bests = fireflies[0]
 
