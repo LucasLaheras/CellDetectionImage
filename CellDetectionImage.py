@@ -37,16 +37,27 @@ def CellDetectionImage(im0):
 
     # 3x dilatação binaria
     kernel = np.ones((3, 3), np.uint8)
-    dilation = cv2.dilate(im2, kernel, iterations=3)
-
-    mostra(dilation)
+    im2 = cv2.dilate(im2, kernel, iterations=3)
 
     # obtem somente a maior região = região de interesse
+    ret, thresh = cv2.threshold(im2, 127, 255, 0)
+    contours, _ = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+
+    idx = 0
+    for i in range(1, len(contours)):
+        if len(contours[idx]) < len(contours[i]):
+            idx = i
 
     # separa somente a maior região de interesse
-    # img_com_mascara = cv2.bitwise_and(img, img, mask=mascara)
+    lin, col = im2.shape
+    im3 = np.zeros([lin, col], dtype=np.uint8)
+
+    cv2.drawContours(im3, contours, idx, 255, -1)
 
     # histograma na região de interesse
+    im4 = histLocalEq(im3, im0)
+
+    mostra(im4)
 
     # level-set somente na região de interesse
 
@@ -118,3 +129,30 @@ def lplHisteq(im1):
             imeq[y, x] = round(H[im1[y, x]]*255)
 
     return imeq
+
+
+def histLocalEq(msk, im0):
+
+    lin, col = msk.shape
+    im1 = cv2.cvtColor(im0, cv2.COLOR_BGR2GRAY)
+
+    H1 = [0]*256
+    for y in range(lin):
+        for x in range(col):
+            if msk[y, x]:
+                H1[im1[y, x]] = H1[im1[y, x]] + 1
+
+    for i in range(1, 256):
+        H1[i] = H1[i] + H1[i-1]
+
+    H1 = [x/H1[255] for x in H1]
+
+    im2 = np.zeros([lin, col], dtype=np.uint8)
+    for y in range(lin):
+        for x in range(col):
+            if msk[y, x]:
+                im2[y, x] = int(round(H1[im1[y, x] + 1]*255))
+                if im2[y, x] > 255:
+                    im2[y, x] = 255
+
+    return im2
