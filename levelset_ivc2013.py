@@ -1,12 +1,13 @@
 import numpy as np
 import math
 
-def levelset_ivc2013(im, w = 0, ini = 0):
+def levelset_ivc2013(im, w = 0, ini = 0, * args):
     """"
         :param im: input 2D gray image;
         :param w: coefficient cordinating local and global forces
         :param ini: initial level set contour
     """
+
     img = im.copy()
 
     imgn = 255*(img-img.min())/(img.max()-img.min())
@@ -14,7 +15,7 @@ def levelset_ivc2013(im, w = 0, ini = 0):
     # get the size
     nrow, ncol = img.shape
 
-    if nargin < 2 or w < 0:
+    if len(args) < 2 or w < 0:
         rho = 3
 
         rf = rangefilt(imgn, np.ones((15, 15), np.uint8))
@@ -22,7 +23,7 @@ def levelset_ivc2013(im, w = 0, ini = 0):
 
         w = rho*mean(mean(ct))*(1-ct)
 
-    if nargin < 3:
+    if len(args) < 3:
         u = sdf2circle(nrow, ncol, nrow / 2, ncol / 2, min(nrow / 8, ncol / 8))
 
     elif ini == 0:
