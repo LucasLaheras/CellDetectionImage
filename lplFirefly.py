@@ -1,5 +1,6 @@
 import random
 import math
+import numpy as np
 
 
 def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
@@ -16,26 +17,17 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
     t = 0
     alphat = 1.0
     bests = [0]*d
-    random.seed(0)  # gera sempre os mesmos numeros aleatorios
+    random.seed(0)  # Reset the random generator
 
-    randommatrix = []
+    fireflies = []
 
+    # Generating the initial locations of n fireflies
     for i in range(n):
         threshold = random.sample(range(1, 255), d)
         threshold.sort()
-        randommatrix.append(threshold)
+        fireflies.append(threshold)
 
-    randommatrix = [[127, 207],
-                    [74, 250],
-                    [171, 4],
-                    [243, 208],
-                    [195, 158],
-                    [169, 142],
-                    [33, 62],
-                    [24, 209],
-                    [4, 67],
-                    [73, 191]]
-
+    # Iterations or pseudo time marching
     r = []
     for i in range(n):
         lin = [0.0]*n
@@ -43,77 +35,80 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
 
     Z = [0]*n
 
-    while t < maxGenerarion:
+    while t < maxGenerarion:  # Start itarations
         for i in range(n):
-            for j in range(i+1, n):
-                if Z[j] == 0:
-                    Z[j] = psrAvaliacaoShannon(H, randommatrix[j])
-                if Z[i] == 0:
-                    Z[i] = psrAvaliacaoShannon(H, randommatrix[i])
-                r[i][j] = math.sqrt((Z[i] - Z[j]) ** 2)
+            Z[i] = -psrAvaliacaoShannon(H, fireflies[i])
+
+        indice = np.argsort(Z)
+        Z.sort()
+
+        Z = [-x for x in Z]
+
+        # Ranking the fireflies by their light intensity
+        rank = [0]*n
         for i in range(n):
-            Z[i] = psrAvaliacaoShannon(H, randommatrix[i])
-            for j in range(i, n):
+            rank[i] = fireflies[indice[i]]
+
+        fireflies = rank
+
+        for i in range(n):
+            for j in range(n):
+                r[i][j] = dist(fireflies[i], fireflies[j])
+
+        alphat = alpha * alphat  # Reduce randomness as iterations proceed
+
+        # Move all fireflies to the better locations
+        for i in range(n):
+            for j in range(n):
                 if Z[i] < Z[j]:
                     threshold = random.sample(range(1, 255), d)
                     threshold.sort()
 
-                    alphat = alpha * alphat
                     betat = beta*math.exp(-gamma*((r[i][j])**2))
 
-                    print(str(betat) + " " + str(alphat) + " " + str(gamma))
+                    if i != n-1:
 
-                    for k in range(d):
-                        randommatrix[i][k] = int((1 - betat)*randommatrix[i][k] + betat*randommatrix[j][k] +
-                                                 alphat*threshold[k])
-                        #randommatrix[i][k] = (1 - betat) * randommatrix[i][k] + betat * (randommatrix[i][k]) + \
-                        #                     threshold[k]
-                        #randommatrix[i][k] = int(randommatrix[i][k] / (1 + alphat))
+                        for k in range(d):
+                            fireflies[i][k] = int(((1 - betat)*fireflies[i][k] + betat*fireflies[j][k] +
+                                                     alphat*threshold[k])/(1+alphat))
+                            # fireflies[i][k] = (1 - betat) * fireflies[i][k] + betat * (fireflies[i][k]) + \
+                            #                     threshold[k]
+                            # fireflies[i][k] = int(fireflies[i][k] / (1 + alphat))
 
-        for i in range(n):
-            Z[i] = psrAvaliacaoShannon(H, randommatrix[i])
-
-        bigger = 0
-
-        for i in range(1, n):
-            if Z[bigger] < Z[i]:
-                bigger = i
-
-        bests = randommatrix[bigger]
+        bests = fireflies[0]
 
         t += 1
+
+    bests.sort()
 
     return bests
 
 
 def psrAvaliacaoShannon(histograma, elemento):
     elemento.insert(0, 0)
-    elemento.append(255)
+    elemento.append(256)
     n = len(elemento)
 
-    a = elemento[0]
+    a = elemento[0]+1
     b = elemento[1]
-    print(str(a) + " " + str(b))
 
     light = ShannonEntropy(histograma, a, b)
 
-    for i in range(n - 1):
+    for i in range(1, n - 1):
         a = elemento[i] + 1
         b = elemento[i + 1]
-        print(str(a) + " " + str(b))
 
         ES = ShannonEntropy(histograma, a, b)
-        print(ES)
         light += ES
 
     elemento.remove(0)
-    elemento.remove(255)
+    elemento.remove(256)
 
     return light
 
 
 def ShannonEntropy(histograma, a, b):
-    H = histograma[a:b]
+    H = histograma[a:b+1]
     s = sum(H)
     if s > 0:
         H = [float(i) / s for i in H]
@@ -122,9 +117,16 @@ def ShannonEntropy(histograma, a, b):
 
     for i in range(L):
         if H[i] != 0:
-            S += H[i] * math.log10(H[i])
+            S += H[i] * math.log(H[i])
 
     S *= -1
 
     return S
 
+
+def dist(a, b):
+    S = 0
+    for k in range(len(a)):
+        S += (a[k] - b[k]) ** 2
+    S = math.sqrt(S)
+    return S
