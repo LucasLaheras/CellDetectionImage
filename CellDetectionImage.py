@@ -4,6 +4,7 @@ from psrGrayHistogram import psrGrayHistogram
 from matplotlib import pyplot as plt
 from lplFirefly import lplFirefly
 from psrMultiLimiarizacao import psrMultiLimiarizacao
+from levelset_ivc2013 import levelset_ivc2013
 
 
 def CellDetectionImage(im0):
@@ -57,11 +58,20 @@ def CellDetectionImage(im0):
     # histograma na região de interesse
     im4 = histLocalEq(im3, im0)
 
-    mostra(im4)
 
     # level-set somente na região de interesse
+    im5, _, _ = levelset_ivc2013(im4)
+    mostra(im4)
 
     # normalização
+
+    # binarização das regiões de interesse
+    for y in range(lin):
+        for x in range(col):
+            if im5[y, x] < 128:
+                im5[y, x] = 0
+            else:
+                im5[y, x] = 255
 
     # colorização randomica das regiões de interesse
 
