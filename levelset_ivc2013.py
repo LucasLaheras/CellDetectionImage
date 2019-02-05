@@ -1,14 +1,16 @@
 import numpy as np
 import math
+import cv2
 
-def levelset_ivc2013(im, w = 0, ini = 0, * args):
+
+def levelset_ivc2013(im, w=0, ini=0, * args):
     """"
         :param im: input 2D gray image;
         :param w: coefficient cordinating local and global forces
         :param ini: initial level set contour
     """
 
-    img = im.copy()
+    img = im.astype(np.float)
 
     imgn = 255*(img-img.min())/(img.max()-img.min())
 
@@ -18,16 +20,20 @@ def levelset_ivc2013(im, w = 0, ini = 0, * args):
     if len(args) < 2 or w < 0:
         rho = 3
 
-        rf = rangefilt(imgn, np.ones((15, 15), np.uint8))
+        # rangefilt
+        rf = cv2.morphologyEx(imgn, imgn, np.ones((15, 15)))
         ct = rf/(imgn.max())
 
-        w = rho*mean(mean(ct))*(1-ct)
+        w = rho*ct*(1-ct)
 
     if len(args) < 3:
         u = sdf2circle(nrow, ncol, nrow / 2, ncol / 2, min(nrow / 8, ncol / 8))
-
     elif ini == 0:
+        # imshow
+        h_im = imshow(img, [])
+        # imellipse
         e = imellipse(gca)
+        # createMask
         imgbk = createMask(e, h_im)
 
         u = 2*(0.5-imgbk)
@@ -38,13 +44,14 @@ def levelset_ivc2013(im, w = 0, ini = 0, * args):
     numIter = 1000
     timestep = 2
 
-    #imgfilt =
+    # imfilter
+    imgfilt = imfilter(img, fspecial('average', 25), 'symmetric', 'conv')
     imgfilt = imgfilt - img
 
     imgrec = u
 
     # start level set evolution
-    u10 = 0
+    ul0 = 0
     tcost = 0
     for k in range(numIter):
         # update level set function
@@ -64,7 +71,7 @@ def EVOL_BGFRLS(img, imgfilt, imgini, w, timestep):
     phi = imgini
     phi = NeumannBoundCond(phi)
 
-    phi = (phi>0) - (phi<0)
+    phi = (phi > 0) - (phi < 0)
 
     Hphi = Heaviside(phi)
 
@@ -77,7 +84,8 @@ def EVOL_BGFRLS(img, imgfilt, imgini, w, timestep):
     # updating the phi function   # Original CV2001 paper
     phi = phi + timestep*(w*p1+(1-w)*p2)
 
-    #phi = imfilter()
+    # imfilter
+    phi = imfilter(phi,fspecial('gaussian',5,5),'symmetric')
 
     return phi
 
@@ -101,9 +109,9 @@ def NeumannBoundCond(f):
     # Make a function satisfy Neumann boundary condition
     nrow, ncol = f.shape
     g = f
-    g([1 nrow],[1 ncol]) = g([3 nrow-2],[3 ncol-2])
-    g([1 nrow],2:end-1) = g([3 nrow-2],2:end-1)
-    g(2:end-1,[1 ncol]) = g(2:end-1,[3 ncol-2])
+    #g([1 nrow],[1 ncol]) = g([3 nrow-2],[3 ncol-2])
+    #g([1 nrow],2:end-1) = g([3 nrow-2],2:end-1)
+    #g(2:end-1,[1 ncol]) = g(2:end-1,[3 ncol-2])
 
     return g
 
@@ -116,6 +124,7 @@ def sdf2circle(nrow, ncol, ci, cj, rd):
     # computes the signed distance to a circle
     a = [i+1 for i in range(ncol)]
     b = [i+1 for i in range(nrow)]
+    # meshgrid
     X, Y = np.meshgrid(a, b)
     f = math.sqrt((X-cj)**2+(Y-ci)**2)-rd
 

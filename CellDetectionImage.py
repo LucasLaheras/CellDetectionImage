@@ -58,12 +58,16 @@ def CellDetectionImage(im0):
     # histograma na região de interesse
     im4 = histLocalEq(im3, im0)
 
+    mostra(im4)
 
     # level-set somente na região de interesse
     im5, _, _ = levelset_ivc2013(im4)
-    mostra(im4)
+    mostra(im5)
 
     # normalização
+    maior = im5.max
+    menor = im5.min
+    im5 = round(255 - (((im5 - menor) / (maior - menor)) * 255))
 
     # binarização das regiões de interesse
     for y in range(lin):

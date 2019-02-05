@@ -1,3 +1,4 @@
+
 def psrMultiLimiarizacao(im, limiares):
 
     limiares.insert(0, 0)
@@ -8,6 +9,7 @@ def psrMultiLimiarizacao(im, limiares):
     L = len(limiares)
 
     Lim = [round(i*255/(L-2)) for i in range(L-1)]
+    # Lim = np.linspace(0, 255, 255/L-2) # code in numpy
 
     lin, col = im.shape
 
@@ -18,6 +20,7 @@ def psrMultiLimiarizacao(im, limiares):
             t2 = limiares[1]
 
             if im1[y, x] >= t1 and im1[y, x] <= t2:
+            # if t1 <= im1[y, x] <= t2:
                 im1[y, x] = Lim[0]
             else:
                 i = 1
@@ -26,6 +29,7 @@ def psrMultiLimiarizacao(im, limiares):
                     t1 = limiares[i]
                     t2 = limiares[i+1]
                     if im1[y, x] >= t1 and im1[y, x] <= t2:
+                    # if t1 <= im1[y, x] <= t2:
                         clust = 0
                         im1[y, x] = Lim[i]
                     i += 1
