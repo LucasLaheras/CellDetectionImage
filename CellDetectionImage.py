@@ -4,7 +4,7 @@ from psrGrayHistogram import psrGrayHistogram
 from matplotlib import pyplot as plt
 from lplFirefly import lplFirefly
 from psrMultiLimiarizacao import psrMultiLimiarizacao
-from levelset_ivc2013 import levelset_ivc2013
+from levelsetITK import levelsetITK
 
 
 def CellDetectionImage(im0):
@@ -61,7 +61,7 @@ def CellDetectionImage(im0):
     mostra(im4)
 
     # level-set somente na região de interesse
-    im5, _, _ = levelset_ivc2013(im4)
+    im5 = levelsetITK()
     mostra(im5)
 
     # normalização
