@@ -4,8 +4,7 @@ from psrGrayHistogram import psrGrayHistogram
 from matplotlib import pyplot as plt
 from lplFirefly import lplFirefly
 from psrMultiLimiarizacao import psrMultiLimiarizacao
-from levelsetITK import levelsetITK
-
+from levelsetITK import levelset
 
 def CellDetectionImage(im0):
     # conversão pra tons de cinza
@@ -60,8 +59,12 @@ def CellDetectionImage(im0):
 
     mostra(im4)
 
+    M = cv2.moments(im4)
+    cX = int(M["m10"] / M["m00"])
+    cY = int(M["m01"] / M["m00"])
+
     # level-set somente na região de interesse
-    im5 = levelsetITK()
+    im5 = levelset(im4, cX, cY)
     mostra(im5)
 
     # normalização

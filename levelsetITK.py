@@ -89,14 +89,8 @@ def levelsetITK(inputFileName, outputFileName, seedPosX, seedPosY, initialDistan
         InputImageType, OutputImageType]
 
     caster1 = CastFilterType.New()
-    caster2 = CastFilterType.New()
-    caster3 = CastFilterType.New()
-    caster4 = CastFilterType.New()
 
     writer1 = WriterType.New()
-    writer2 = WriterType.New()
-    writer3 = WriterType.New()
-    writer4 = WriterType.New()
 
     caster1.SetInput(smoothing.GetOutput())
     writer1.SetInput(caster1.GetOutput())
@@ -104,26 +98,6 @@ def levelsetITK(inputFileName, outputFileName, seedPosX, seedPosY, initialDistan
     caster1.SetOutputMinimum(itk.NumericTraits[OutputPixelType].min())
     caster1.SetOutputMaximum(itk.NumericTraits[OutputPixelType].max())
     writer1.Update()
-
-    caster2.SetInput(gradientMagnitude.GetOutput())
-    writer2.SetInput(caster2.GetOutput())
-    writer2.SetFileName("GeodesicActiveContourImageFilterOutput2.png")
-    caster2.SetOutputMinimum(itk.NumericTraits[OutputPixelType].min())
-    caster2.SetOutputMaximum(itk.NumericTraits[OutputPixelType].max())
-    writer2.Update()
-
-    caster3.SetInput(sigmoid.GetOutput())
-    writer3.SetInput(caster3.GetOutput())
-    writer3.SetFileName("GeodesicActiveContourImageFilterOutput3.png")
-    caster3.SetOutputMinimum(itk.NumericTraits[OutputPixelType].min())
-    caster3.SetOutputMaximum(itk.NumericTraits[OutputPixelType].max())
-    writer3.Update()
-
-    caster4.SetInput(fastMarching.GetOutput())
-    writer4.SetInput(caster4.GetOutput())
-    writer4.SetFileName("GeodesicActiveContourImageFilterOutput4.png")
-    caster4.SetOutputMinimum(itk.NumericTraits[OutputPixelType].min())
-    caster4.SetOutputMaximum(itk.NumericTraits[OutputPixelType].max())
 
     fastMarching.SetOutputSize(
         reader.GetOutput().GetBufferedRegion().GetSize())
@@ -144,7 +118,15 @@ def levelsetITK(inputFileName, outputFileName, seedPosX, seedPosY, initialDistan
         str(geodesicActiveContour.GetElapsedIterations()) + "\n")
     print("RMS change: " + str(geodesicActiveContour.GetRMSChange()) + "\n")
 
-    return thresholder.GetOutput()
+    imglvs = cv2.imread("levelset.png")
+    return imglvs
+
+
+def levelset(img, cX, cY):
+    cv2.imwrite("histogramaLocal.png", img)
+    levelsetITK("histogramaLocal.png", "levelset.png", cX, cY, 5.0, 1.0, -0.3, 2.0, 10.0, 490)
+    imglvs = cv2.imread("levelset.png")
+    return imglvs
 
 
 def mostra(img, name='Name'):
@@ -155,13 +137,6 @@ def mostra(img, name='Name'):
     return
 
 
-im1 = cv2.cvtColor(cv2.imread("BrainProtonDensitySlice6.png"), cv2.COLOR_BGR2GRAY)
-lin, col = im1.shape
+teste = levelsetITK("BrainProtonDensitySlice6.png", "levelset.png", 56, 92, 5.0, 1.0, -0.3, 2.0, 10.0, 490)
 
-im2 = np.zeros([lin, col], dtype=np.uint8)
-
-im2[100:200, 50:100] = 255
-
-mostra(im2)
-
-mostra(levelsetITK("BrainProtonDensitySlice6.png", "teste.png", 56, 92, 5.0, 1.0, -0.3, 2.0, 10.0, 490))
+mostra(teste)
