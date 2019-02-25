@@ -70,7 +70,7 @@ def CellDetectionImage(im0):
     # normalização
     maior = im5.max
     menor = im5.min
-    im5 = round(255 - (((im5 - menor) / (maior - menor)) * 255))
+    im5 = 255 - (((im5 - menor) / (maior - menor)) * 255)
 
     # binarização das regiões de interesse
     for y in range(lin):
@@ -120,7 +120,7 @@ def histograma(image):
 
 
 def mostra(img, name='Name'):
-    cv2.namedWindow(name, cv2.WINDOW_NORMAL)
+    cv2.namedWindow(name, cv2.WINDOW_AUTOSIZE)
     cv2.imshow(name, img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()

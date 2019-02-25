@@ -130,13 +130,14 @@ def levelset(img, cX, cY):
 
 
 def mostra(img, name='Name'):
-    cv2.namedWindow(name, cv2.WINDOW_NORMAL)
+    cv2.namedWindow(name, cv2.WINDOW_AUTOSIZE)
     cv2.imshow(name, img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     return
 
 
-teste = levelsetITK("BrainProtonDensitySlice6.png", "levelset.png", 56, 92, 5.0, 1.0, -0.3, 2.0, 10.0, 490)
+if __name__ == '__main__':
+    teste = levelsetITK("BrainProtonDensitySlice6.png", "levelset.png", 56, 92, 5.0, 1.0, -0.3, 2.0, 10.0, 490)
 
-mostra(teste)
+    mostra(teste)
