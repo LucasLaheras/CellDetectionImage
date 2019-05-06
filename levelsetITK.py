@@ -179,7 +179,6 @@ if __name__ == '__main__':
     levelsetITK("histogramaLocal.png", "levelset.png", 56, 92, 5.0, 1.0, -10.3, 10, 10.0, 490)
 
     teste = cv2.imread("GeodesicActiveContourImageFilterOutput3.png")
-
     """""
     lin, col, h = teste.shape
 
