@@ -82,7 +82,7 @@ def CellDetectionImage(im0):
 
     # colorização randomica das regiões de interesse
 
-    return
+    return im5
 
 
 def unique(image):
