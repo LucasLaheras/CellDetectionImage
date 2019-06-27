@@ -90,8 +90,6 @@ def unique(image):
         if unique[i] > 0:
             print(i)
 
-    return
-
 
 def histograma(image):
 
@@ -105,15 +103,12 @@ def histograma(image):
     plt.legend(('cdf', 'histogram'), 'upper left')
     plt.show()
 
-    return
-
 
 def mostra(img, name='Name'):
     cv2.namedWindow(name, cv2.WINDOW_AUTOSIZE)
     cv2.imshow(name, img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-    return
 
 
 def maxmax(image):
@@ -144,21 +139,21 @@ def individualregioncolor(im1):
     except:
         im2 = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
 
-    # identifies each area separately
-    ret, thresh = cv2.threshold(im2, 127, 255, 0)
-    contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+    im2 = cv2.threshold(im2, 127, 255, cv2.THRESH_BINARY)[1]  # ensure binary
+    ret, labels = cv2.connectedComponents(im2)
 
-    # creates an array of the same size
-    lin, col = im2.shape
-    im3 = np.zeros([lin, col], dtype=np.uint8)
-    im3 = cv2.cvtColor(im3, cv2.COLOR_GRAY2RGB)
+    # Map component labels to hue val
+    label_hue = np.uint8(179 * labels / np.max(labels))
+    blank_ch = 255 * np.ones_like(label_hue)
+    labeled_img = cv2.merge([label_hue, blank_ch, blank_ch])
 
-    # color each area with a randomly generated RGB color
-    for i in range(1, len(contours)):
-        cv2.drawContours(im3, contours, i,
-                         ((random.randint(100, 255)), random.randint(100, 255), random.randint(100, 255)), -1)
+    # cvt to BGR for display
+    labeled_img = cv2.cvtColor(labeled_img, cv2.COLOR_HSV2BGR)
 
-    return im3
+    # set bg label to black
+    labeled_img[label_hue == 0] = 0
+
+    return labeled_img
 
 
 def histLocalEq(msk, im0):
