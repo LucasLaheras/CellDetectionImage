@@ -5,6 +5,7 @@ import PIL
 from PIL import ImageTk, Image, ImageGrab
 import cv2
 import numpy as np
+import skimage.io as ski_io
 from CellDetectionImage import CellDetectionImage
 
 # TODO open image
@@ -24,11 +25,11 @@ class GUI(object):
 
         # create a pulldown menu, and add it to the menu bar
         self.filemenu = Menu(self.menubar)
-        self.filemenu.add_command(label="Open", command=self.open_file)
-        self.filemenu.add_command(label="Save", command=self.save)
+        self.filemenu.add_command(label="Abrir", command=self.open_file)
+        self.filemenu.add_command(label="Salvar", command=self.save)
         self.filemenu.add_separator()
-        self.filemenu.add_command(label="Exit", command=self.root.quit)
-        self.menubar.add_cascade(label="File", menu=self.filemenu)
+        self.filemenu.add_command(label="Sair", command=self.root.quit)
+        self.menubar.add_cascade(label="Arquivo", menu=self.filemenu)
 
         self.pen_button = Button(self.root, text='Pen', command=self.use_pen)
         self.pen_button.grid(row=0, column=0, columnspan=2)
@@ -39,8 +40,8 @@ class GUI(object):
         # self.color_button = Button(self.root, text='Color', command=self.choose_color)
         # self.color_button.grid(row=0, column=2, columnspan=2)
 
-        # self.eraser_button = Button(self.root, text='Eraser', command=self.use_eraser)
-        # self.eraser_button.grid(row=0, column=3)
+        self.eraser_button = Button(self.root, text='Eraser', command=self.use_eraser)
+        self.eraser_button.grid(row=0, column=3)
 
         self.choose_size_button = Scale(self.root, from_=1, to=10, orient=HORIZONTAL)
         self.choose_size_button.grid(row=0, column=4, columnspan=2)
@@ -83,25 +84,46 @@ class GUI(object):
         self.label_image1 = np.zeros([600, 600], dtype=np.uint8)
 
         self.setup()
+        self.translatePortuguese()
         self.root.mainloop()
 
     # TODO change the selection
     def apply_modification(self):
         pass
 
+    def translatePortuguese(self):
+        self.pen_button.config(text="Caneta")
+        self.eraser_button.config(text="Borracha")
+        self.btn_apply.config(text="Aplicar")
+        self.last_original.config(text="Imagem Original")
+
     # TODO create a new method to save, because this not work
     def save(self):
 
-        file = filedialog.asksaveasfilename(filetypes=[('Portable Network Graphics', '*.png')])
-        if file:
-            x = self.c.winfo_x() + self.root.winfo_rootx()
-            y = self.c.winfo_y() + self.root.winfo_rooty()
-            x1 = x + self.c.winfo_width()
-            y1 = y + self.c.winfo_height()
+        # save canvas to .eps (postscript) file
+        self.c.postscript(file="tmp_canvas.eps",
+                          colormode="color",
+                          width=self.c.winfo_width(),
+                          height=self.c.winfo_height(),
+                          pagewidth=self.root.winfo_width() - 1,
+                          pageheight=self.root.winfo_height() - 1)
 
-            print(self.root.winfo_rootx(), self.root.winfo_rooty(), self.c.winfo_x(), self.c.winfo_y(), self.c.winfo_width(), self.c.winfo_height(), x, y, x1, y1)
+        # read the postscript data
+        data = ski_io.imread("tmp_canvas.eps")
 
-            PIL.ImageGrab.grab().crop(bbox=self.c).save(file + '.png')
+        # write a rasterized png file
+        ski_io.imsave("canvas_image.png", data)
+
+        #file = filedialog.asksaveasfilename(filetypes=[('Portable Network Graphics', '*.png')])
+        #if file:
+        #    x = self.c.winfo_x() + self.root.winfo_rootx()
+        #    y = self.c.winfo_y() + self.root.winfo_rooty()
+        #    x1 = x + self.c.winfo_width()
+        #    y1 = y + self.c.winfo_height()
+
+        #    print(self.root.winfo_rootx(), self.root.winfo_rooty(), self.c.winfo_x(), self.c.winfo_y(), self.c.winfo_width(), self.c.winfo_height(), x, y, x1, y1)
+
+        #    PIL.ImageGrab.grab().crop(bbox=self.c).save(file + '.png')
 
     def open_file(self):
         self.root.filename = filedialog.askopenfilename(initialdir="/", title="Select file",
@@ -268,8 +290,8 @@ class GUI(object):
         self.eraser_on = False
         self.color = askcolor(color=self.color)[1]
 
-    #def use_eraser(self):
-    #    self.activate_button(self.eraser_button, eraser_mode=True)
+    def use_eraser(self):
+        self.activate_button(self.eraser_button, eraser_mode=True)
 
     def activate_button(self, some_button, eraser_mode=False):
         self.active_button.config(relief=RAISED)
