@@ -3,7 +3,7 @@ Interface gráfica feita no TKinter para segmentação de imagens médicas e bio
 
 # Execução
 - Certifique-se se está instalado a versão 3.6 do Pyhton.
-- Instale os seguintes pacotes: TKinter, numpy, itk e opencv-python.
+- Instale os seguintes pacotes: TKinter, numpy, PIL, ITK e opencv-python.
 - Execute o arquivo Main.py.
 
 # Como Utilizar

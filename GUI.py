@@ -2,7 +2,7 @@ from tkinter import *
 from tkinter.colorchooser import askcolor
 from tkinter import filedialog
 import PIL
-from PIL import ImageTk, Image, ImageGrab
+from PIL import ImageTk, Image, ImageGrab, ImageDraw
 import cv2
 import numpy as np
 import skimage.io as ski_io
@@ -58,6 +58,7 @@ class GUI(object):
         self.label_image.bind("<Button>", self.select_area)
 
         self.imgright = cv2.cvtColor(cv2.imread('Images/' + str(self.i) + '.jpg'), cv2.COLOR_RGB2BGR)
+        self.lin, self.col, _ = self.imgright.shape
         self.imgOriginal = self.imgright.copy()
         img = Image.open('Images/' + str(self.i) + '.jpg').resize((600, 600), Image.ANTIALIAS)
         self.imgOrig = ImageTk.PhotoImage(img)
@@ -65,6 +66,10 @@ class GUI(object):
         self.c = Canvas(self.root, bg='white', width=600, height=600, highlightthickness=0)
         self.c.create_image(0, 0, image=self.imgOrig, anchor=NW)
         self.c.grid(row=1, column=3, columnspan=2)
+
+        self.image1 = Image.new("RGB", (600, 600), (0, 0, 0))
+        self.image1.getcolors()
+        self.draw = ImageDraw.Draw(self.image1)
 
         # self.last_image = Button(self.root, text='Last image', command=self.last_img)
         # self.last_image.grid(row=2, column=0, columnspan=2)
@@ -89,7 +94,11 @@ class GUI(object):
 
     # TODO change the selection
     def apply_modification(self):
-        pass
+        image_saved = self.image1.copy().resize((self.lin, self.col), PIL.Image.ANTIALIAS)
+        image_saved1 = np.array(image_saved)
+
+        self.image1 = Image.new("RGB", (600, 600), (0, 0, 0))
+        self.draw = ImageDraw.Draw(self.image1)
 
     def translatePortuguese(self):
         self.pen_button.config(text="Caneta")
@@ -99,33 +108,14 @@ class GUI(object):
 
     # TODO create a new method to save, because this not work
     def save(self):
-
-        # save canvas to .eps (postscript) file
-        self.c.postscript(file="tmp_canvas.eps",
-                          colormode="color",
-                          width=self.c.winfo_width(),
-                          height=self.c.winfo_height(),
-                          pagewidth=self.root.winfo_width() - 1,
-                          pageheight=self.root.winfo_height() - 1)
-
-        # read the postscript data
-        data = ski_io.imread("tmp_canvas.eps")
-
-        # write a rasterized png file
-        ski_io.imsave("canvas_image.png", data)
-
-        #file = filedialog.asksaveasfilename(filetypes=[('Portable Network Graphics', '*.png')])
-        #if file:
-        #    x = self.c.winfo_x() + self.root.winfo_rootx()
-        #    y = self.c.winfo_y() + self.root.winfo_rooty()
-        #    x1 = x + self.c.winfo_width()
-        #    y1 = y + self.c.winfo_height()
-
-        #    print(self.root.winfo_rootx(), self.root.winfo_rooty(), self.c.winfo_x(), self.c.winfo_y(), self.c.winfo_width(), self.c.winfo_height(), x, y, x1, y1)
-
-        #    PIL.ImageGrab.grab().crop(bbox=self.c).save(file + '.png')
+        filename = "my_drawing.jpg"
+        image_saved = self.image1.copy().resize((self.lin, self.col), PIL.Image.ANTIALIAS)
+        image_saved.save(filename)
 
     def open_file(self):
+        self.image1 = Image.new("RGB", (600, 600), (0, 0, 0))
+        self.draw = ImageDraw.Draw(self.image1)
+
         self.root.filename = filedialog.askopenfilename(initialdir="/", title="Select file",
                                                    filetypes=(("Images files", "*.png"), ("Images files", "*.jpg"),
                                                               ("All files", "*.*")))
@@ -146,6 +136,9 @@ class GUI(object):
 
     def select_area(self, event):
         img = self.img.copy()
+
+        self.image1 = Image.new("RGB", (600, 600), (0, 0, 0))
+        self.draw = ImageDraw.Draw(self.image1)
 
         try:
             _, _ = img.shape
@@ -212,6 +205,7 @@ class GUI(object):
             for x in range(col):
                 if im3[y, x] == 255:
                     temp[y, x] = [255, 255, 255]
+                    self.draw.point((int(x * 600 / y2), y * 600 / x2), fill='white')
 
         self.imgright = temp
 
@@ -248,7 +242,7 @@ class GUI(object):
     def next_img(self):
         self.i += 1
 
-        if (self.i > 10):
+        if self.i > 10:
             self.end_file()
             return
 
@@ -301,10 +295,11 @@ class GUI(object):
 
     def paint(self, event):
         self.line_width = self.choose_size_button.get()
-        paint_color = 'white' if self.eraser_on else self.color
+        paint_color = 'black' if self.eraser_on else 'white'
         if self.old_x and self.old_y:
             self.c.create_line(self.old_x, self.old_y, event.x, event.y, width=self.line_width, fill=paint_color,
                                capstyle=ROUND, smooth=TRUE, splinesteps=36)
+            self.draw.line((self.old_x, self.old_y, event.x, event.y), fill=paint_color, width=self.choose_size_button.get())
         self.old_x = event.x
         self.old_y = event.y
 
