@@ -4,10 +4,10 @@ from GUI import GUI
 
 if __name__ == '__main__':
 
-    GUI()
+#    GUI()
 
-#    path = 'Images/1.jpg'
-#
-#    im0 = cv2.imread(path)
-#
-#    CellDetectionImage(im0)
+    path = 'Images/1.jpg'
+
+    im0 = cv2.imread(path)
+
+    CellDetectionImage(im0)

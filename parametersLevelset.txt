@@ -1,0 +1,8 @@
+seedPosX: 582
+seedPosY: 733
+initialDistance: 5.0
+sigma: 1.0
+alpha: -0.3
+beta: 3.0
+propagationScaling: 5.0
+numberOfIterations: 490

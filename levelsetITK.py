@@ -61,7 +61,7 @@ def levelsetITK(inputFileName, outputFileName, seedPosX, seedPosY, initialDistan
     geodesicActiveContour.SetCurvatureScaling(1.0)
     geodesicActiveContour.SetAdvectionScaling(1.0)
     geodesicActiveContour.SetMaximumRMSError(0.02)
-    geodesicActiveContour.SetNumberOfIterations(numberOfIterations)
+    geodesicActiveContour.SetNumberOfIterations(int(numberOfIterations))
     geodesicActiveContour.SetInput(fastMarching.GetOutput())
     geodesicActiveContour.SetFeatureImage(sigmoid.GetOutput())
 
@@ -79,8 +79,8 @@ def levelsetITK(inputFileName, outputFileName, seedPosX, seedPosY, initialDistan
     thresholder.SetInput(geodesicActiveContour.GetOutput())
 
     seedPosition = itk.Index[Dimension]()
-    seedPosition[0] = seedPosX
-    seedPosition[1] = seedPosY
+    seedPosition[0] = int(seedPosX)
+    seedPosition[1] = int(seedPosY)
 
     node = itk.LevelSetNode[InputPixelType, Dimension]()
     node.SetValue(seedValue)
@@ -159,9 +159,29 @@ def levelsetITK(inputFileName, outputFileName, seedPosX, seedPosY, initialDistan
     return imglvs
 
 
-def levelset(img, cX, cY):
+def levelset(img):
+    arq = open('parametersLevelset.txt', 'r')
+    texto = arq.readlines()
+
+    parameters = []
+    for linha in texto:
+        a = ''
+
+        teste = False
+        for caracteres in linha:
+            if teste:
+                a += caracteres
+            elif ' ' == caracteres:
+                teste = True
+
+        parameters.append(float(a))
+
+    arq.close()
+
     cv2.imwrite("histogramaLocal.png", img)
-    levelsetITK("histogramaLocal.png", "levelset.png", cX, cY, 5.0, 1.0, -0.3, 2.0, 10.0, 490)
+    levelsetITK("histogramaLocal.png", "levelset.png", parameters[0], parameters[1], parameters[2], parameters[3],
+                parameters[4], parameters[5], parameters[6], parameters[7])
+
     imglvs = cv2.imread("levelset.png")
     return imglvs
 
@@ -175,20 +195,9 @@ def mostra(img, name='Name'):
 
 
 if __name__ == '__main__':
-    # teste = levelsetITK("BrainProtonDensitySlice6.png", "levelset.png", 56, 92, 5.0, 1.0, -0.3, 2.0, 10.0, 490)
+    teste = levelsetITK("BrainProtonDensitySlice6.png", "levelset.png", 56, 92, 5.0, 1.0, -0.3, 2.0, 10.0, 490)
     levelsetITK("histogramaLocal.png", "levelset.png", 56, 92, 5.0, 1.0, -10.3, 10, 10.0, 490)
 
     teste = cv2.imread("GeodesicActiveContourImageFilterOutput3.png")
-    """""
-    lin, col, h = teste.shape
-
-    for y in range(lin):
-        for x in range(col):
-            for z in range(h):
-                if teste[y, x, z] < 128:
-                    teste[y, x, z] = 0
-                else:
-                    teste[y, x, z] = 255
-    """""
 
     mostra(teste)

@@ -2,15 +2,13 @@ from tkinter import *
 from tkinter.colorchooser import askcolor
 from tkinter import filedialog
 import PIL
-from PIL import ImageTk, Image, ImageGrab, ImageDraw
+from PIL import ImageTk, Image, ImageDraw
 import cv2
 import numpy as np
-import skimage.io as ski_io
 from CellDetectionImage import CellDetectionImage
 
 # TODO open image
 # TODO select in result image and show original image
-
 
 class GUI(object):
     DEFAULT_PEN_SIZE = 5.0
@@ -47,11 +45,12 @@ class GUI(object):
         self.choose_size_button.grid(row=0, column=4, columnspan=2)
 
         # TODO execute cellDetectionImage algorithm on image selected
-        img = Image.open('Images/result-cell-1.png').resize((600, 600), Image.ANTIALIAS)
-        self.img = cv2.imread('Images/result-cell-1.png')
-        # self.img = CellDetectionImage(self.img)
-        # self.imgResult = ImageTk.PhotoImage(Image.fromarray(self.img))
-        self.imgResult = ImageTk.PhotoImage(img)
+        #img = Image.open('Images/result-cell-1.png').resize((600, 600), Image.ANTIALIAS)
+        self.img = cv2.imread('Images/1.jpg')
+        self.img = CellDetectionImage(self.img)
+        img1 = cv2.resize(self.img, (600, 600), interpolation=cv2.INTER_AREA)
+        self.imgResult = ImageTk.PhotoImage(Image.fromarray(img1))
+        # self.imgResult = ImageTk.PhotoImage(img)
 
         self.label_image = Label(self.root, image=self.imgResult)
         self.label_image.grid(row=1, column=1, columnspan=2)
@@ -97,6 +96,22 @@ class GUI(object):
         image_saved = self.image1.copy().resize((self.lin, self.col), PIL.Image.ANTIALIAS)
         image_saved1 = np.array(image_saved)
 
+        # pegar a área dentro do contorno
+        image = cv2.cvtColor(image_saved1.copy(), cv2.COLOR_BGR2GRAY)
+
+        con = 0
+        for i in range(600):
+            for j in range(600):
+                if image[i][j] == 255:
+                    if con == 255:
+                        con = 0
+                    else:
+                        con = 255
+                else:
+                    image[i][j] = con
+
+        self.mostra(image)
+
         self.image1 = Image.new("RGB", (600, 600), (0, 0, 0))
         self.draw = ImageDraw.Draw(self.image1)
 
@@ -119,7 +134,7 @@ class GUI(object):
         self.root.filename = filedialog.askopenfilename(initialdir="/", title="Select file",
                                                    filetypes=(("Images files", "*.png"), ("Images files", "*.jpg"),
                                                               ("All files", "*.*")))
-        self.imgOriginal = cv2.imread(self.root.filename)
+        self.imgOriginal = cv2.imread(self.root.filename, cv2.COLOR_BGR2RGB)
         img = Image.open(self.root.filename).resize((600, 600), Image.ANTIALIAS)
         self.imgOrig = ImageTk.PhotoImage(img)
 
@@ -127,10 +142,11 @@ class GUI(object):
         self.c.create_image(0, 0, image=self.imgOrig, anchor=NW)
 
         # TODO execute cellDetectionImage algorithm on image selected
-        img = Image.open('Images/load.gif').resize((600, 600), Image.ANTIALIAS)
-        # img = CellDetectionImage()
-        # self.imgResult = ImageTk.PhotoImage(Image.fromarray(img))
-        self.imgResult = ImageTk.PhotoImage(img)
+        #img = Image.open('Images/load.gif').resize((600, 600), Image.ANTIALIAS)
+        self.img = CellDetectionImage(self.imgOriginal)
+        img1 = cv2.resize(self.img, (600, 600), interpolation=cv2.INTER_AREA)
+        self.imgResult = ImageTk.PhotoImage(Image.fromarray(img1))
+        # self.imgResult = ImageTk.PhotoImage(img)
 
         self.label_image.configure(image=self.imgResult)
 
@@ -144,7 +160,7 @@ class GUI(object):
             _, _ = img.shape
             im2 = img
         except:
-            im2 = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            im2 = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
         x = event.x
         y = event.y
@@ -253,10 +269,11 @@ class GUI(object):
         self.c.create_image(0, 0, image=self.imgOrig, anchor=NW)
 
         # TODO execute cellDetectionImage algorithm on image selected
-        img = Image.open('Images/imagem segmentada.png').resize((600, 600), Image.ANTIALIAS)
-        # img = CellDetectionImage()
-        # self.imgResult = ImageTk.PhotoImage(Image.fromarray(img))
-        self.imgResult = ImageTk.PhotoImage(img)
+        #img = Image.open('Images/imagem segmentada.png').resize((600, 600), Image.ANTIALIAS)
+        self.img = CellDetectionImage(self.imgOriginal)
+        img1 = cv2.resize(self.img, (600, 600), interpolation=cv2.INTER_AREA)
+        self.imgResult = ImageTk.PhotoImage(Image.fromarray(img1))
+        # self.imgResult = ImageTk.PhotoImage(img)
 
         self.label_image.configure(image=self.imgResult)
 

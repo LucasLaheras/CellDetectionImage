@@ -46,19 +46,19 @@ def CellDetectionImage(im0):
     # histogram in the region of interest
     im4 = histLocalEq(im3, im0)
 
-    mostra(im4)
-
     M = cv2.moments(im4)
     cX = int(M["m10"] / M["m00"])
     cY = int(M["m01"] / M["m00"])
 
     # level-set in the region of interest
-    im5 = levelset(im4, cX, cY)
+    im5 = levelset(im4)
 
     # normalization
     #maior = im5.max
     #menor = im5.min
     #im5 = 255 - (((im5 - menor) / (maior - menor)) * 255)
+
+    im5 = cv2.cvtColor(im5, cv2.COLOR_BGR2GRAY)
 
     # binarization of the regions of interest
     for y in range(lin):
@@ -71,7 +71,7 @@ def CellDetectionImage(im0):
     # random colorization of the regions of interest
     im_out = individualregioncolor(im5)
 
-    return im5
+    return im_out
 
 
 def unique(image):
