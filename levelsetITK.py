@@ -195,8 +195,10 @@ def mostra(img, name='Name'):
 
 
 if __name__ == '__main__':
+    #teste = cv2.imread('images/1.jpg')
+
     teste = levelsetITK("BrainProtonDensitySlice6.png", "levelset.png", 56, 92, 5.0, 1.0, -0.3, 2.0, 10.0, 490)
-    levelsetITK("histogramaLocal.png", "levelset.png", 56, 92, 5.0, 1.0, -10.3, 10, 10.0, 490)
+    #levelsetITK("histogramaLocal.png", "levelset.png", 56, 92, 5.0, 1.0, -10.3, 10, 10.0, 490)
 
     teste = cv2.imread("GeodesicActiveContourImageFilterOutput3.png")
 
