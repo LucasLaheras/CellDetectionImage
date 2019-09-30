@@ -4,7 +4,7 @@ from psrGrayHistogram import psrGrayHistogram
 from matplotlib import pyplot as plt
 from lplFirefly import lplFirefly
 from psrMultiLimiarizacao import psrMultiLimiarizacao
-from levelsetITK import levelset
+from lplLevelset_ivc2013 import lpllevelset_ivc2013
 import random
 
 def CellDetectionImage(im0):
@@ -46,30 +46,24 @@ def CellDetectionImage(im0):
     # histogram in the region of interest
     im4 = histLocalEq(im3, im0)
 
-    M = cv2.moments(im4)
-    cX = int(M["m10"] / M["m00"])
-    cY = int(M["m01"] / M["m00"])
-
     # level-set in the region of interest
-    im5 = levelset(im4)
+    im5, _, _ = lpllevelset_ivc2013(im4)
 
     # normalization
-    #maior = im5.max
-    #menor = im5.min
-    #im5 = 255 - (((im5 - menor) / (maior - menor)) * 255)
-
-    im5 = cv2.cvtColor(im5, cv2.COLOR_BGR2GRAY)
+    maior = im5.max()
+    menor = im5.min()
+    im5 = 255 - (((im5 - menor) / (maior - menor)) * 255)
 
     # binarization of the regions of interest
-    for y in range(lin):
-        for x in range(col):
-            if im5[y, x] < 128:
-                im5[y, x] = 0
-            else:
-                im5[y, x] = 255
+    im5[im5 < 128] = 0
+    im5[im5 >= 128] = 255
+
+    im5 = im5.astype(np.uint8)
 
     # random colorization of the regions of interest
     im_out = individualregioncolor(im5)
+
+    mostra(im_out)
 
     return im_out
 
@@ -143,7 +137,7 @@ def individualregioncolor(im1):
     ret, labels = cv2.connectedComponents(im2)
 
     # Map component labels to hue val
-    label_hue = np.uint8(179 * labels / np.max(labels))
+    label_hue = np.uint8(179 * labels / (np.max(labels)/10))
     blank_ch = 255 * np.ones_like(label_hue)
     labeled_img = cv2.merge([label_hue, blank_ch, blank_ch])
 
