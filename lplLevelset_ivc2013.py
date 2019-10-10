@@ -13,7 +13,7 @@ def lpllevelset_ivc2013(*args):
         'A new level set method for inhomogeneous image segmentation'
         Image and Vision Computing 31(2013) 809 C822
     Argin:
-        img: input 2D gray image
+        imageCV: input 2D gray image
         w: coefficient cordinating local and global forces
         ini: initial level set contour
     Argout:
@@ -33,7 +33,11 @@ def lpllevelset_ivc2013(*args):
     if len(args) > 2:
         ini = args[2]
 
-    # TODO tranformar a imagem em preto e branco
+    # tranforma a imagem em preto e branco
+    try:
+        _, _ = img.shape
+    except:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     imgn = np.copy(img)
 
@@ -45,7 +49,7 @@ def lpllevelset_ivc2013(*args):
 
         kernel = np.ones((15, 15), np.uint8)
 
-        # TODO encontrar uma função que funciona como o rangefilt
+        # rangefilt
 
         rf = cv2.morphologyEx(imgn, cv2.MORPH_GRADIENT, kernel)
 
@@ -76,14 +80,14 @@ def lpllevelset_ivc2013(*args):
     timestep = 2
 
     # TODO encontrar uma função que funciona como o imfilter (definir dtype=cv2.CV_32S, para ter numeros com maior precisão)
-    # imgfilt = scipy.ndimage.filters.median_filter(img, average_filter(25), mode='constant')
+    # imgfilt = scipy.ndimage.filters.median_filter(imageCV, average_filter(25), mode='constant')
 
     # fspecial('average', 25) = average_filter(25)
-    #imgfilt = scipy.misc.imfilter(img, average_filter(25))
+    #imgfilt = scipy.misc.imfilter(imageCV, average_filter(25))
     # ‘reflect’,’constant’,’nearest’,’mirror’, ‘wrap’
-    #imgfilt = scipy.ndimage.convolve(img, average_filter(25), mode='constant')
-    #imgfilt = scipy.ndimage.median_filter(img, size=100)
-    #imgfilt = scipy.signal.convolve(img, average_filter(25))
+    #imgfilt = scipy.ndimage.convolve(imageCV, average_filter(25), mode='constant')
+    #imgfilt = scipy.ndimage.median_filter(imageCV, size=100)
+    #imgfilt = scipy.signal.convolve(imageCV, average_filter(25))
 
     kernel = average_filter(25)
 
@@ -91,15 +95,15 @@ def lpllevelset_ivc2013(*args):
     #imgfilt = np.around(imgfilt, decimals=4)
     imgfilt[imgfilt < 0.00001] = 0
 
-    #imgfilt = scipy.ndimage.filters.convolve(img, average_filter(25))
+    #imgfilt = scipy.ndimage.filters.convolve(imageCV, average_filter(25))
 
-    #imgfilt = cv2.morphologyEx(img, average_filter(25))
+    #imgfilt = cv2.morphologyEx(imageCV, average_filter(25))
 
     #imgfilt = cv2.imread("testea.png", 0)
 
     imgfilt = cv2.resize(imgfilt, img.shape)
 
-    #mostra(img)
+    #mostra(imageCV)
 
     imgfilt = cv2.subtract(imgfilt, img, dtype=cv2.CV_64F)
 
@@ -115,10 +119,10 @@ def lpllevelset_ivc2013(*args):
     ul0 = 0
     tcost = []
 
-    #print("img")
-    #print(np.unique(img))
+    #print("imageCV")
+    #print(np.unique(imageCV))
 
-    #mostra(img)
+    #mostra(imageCV)
     #mostra(u)
     #mostra(w*255)
     #mostra(imgfilt)
@@ -145,6 +149,7 @@ def EVOL_BGFRLS(img, imgfilt, imgini, w, timestep):
     # This function updates the level set function according to Eq(22)
     phi = np.around(imgini.copy(), decimals=4)
     phi = NeumannBoundCond(phi)
+    #phi = np.around(phi.copy(), decimals=4)
 
     # print(np.unique(phi))
 
@@ -160,7 +165,7 @@ def EVOL_BGFRLS(img, imgfilt, imgini, w, timestep):
     #c2 = 116.3988
     # print("c2 " + str(c2))
 
-    # p1 = (img - (c1 + c2) / 2) / (c1 - c2)
+    # p1 = (imageCV - (c1 + c2) / 2) / (c1 - c2)
 
     p1 = np.around(img - (c1 + c2) / 2, decimals=4) / (c1 - c2)
     #p1 = np.around(p1, decimals=4)
@@ -178,13 +183,13 @@ def EVOL_BGFRLS(img, imgfilt, imgini, w, timestep):
 
     # p2 = (imgfilt - (m1 + m2) / 2) / (m1 - m2)
     p2 = np.around(imgfilt - (m1 + m2) / 2, decimals=4) / (m1 - m2)
-    #p2 = np.around(p2, decimals=4)
+    p2 = np.around(p2, decimals=4)
 
     # updating the phi function
     # Original CV2001 paper
-    phi = phi + timestep*(w*p1 + (1 - w)*p2)
+    #phi = phi + timestep*(w*p1 + (1 - w)*p2)
 
-    #phi = phi + np.around(timestep*(np.around(w*p1, decimals=4) + np.around((1 - w)*p2, decimals=4)), decimals=4)
+    phi = phi + np.around(timestep*(np.around(w*p1, decimals=4) + np.around((1 - w)*p2, decimals=4)), decimals=4)
     #phi = np.around(phi, decimals=4)
 
     #mostra(phi)
@@ -198,7 +203,7 @@ def EVOL_BGFRLS(img, imgfilt, imgini, w, timestep):
          [0.0400, 0.0424, 0.0433, 0.0424, 0.0400], [0.0392, 0.0416, 0.0424, 0.0416, 0.0392],
          [0.0369, 0.0392, 0.0400, 0.0392, 0.0369]])
     phi = cv2.filter2D(phi, cv2.CV_64F, G, borderType=cv2.BORDER_REFLECT)
-    #phi = np.around(phi, decimals=4)
+    phi = np.around(phi, decimals=4)
     #phi = scipy.ndimage.gaussian_filter(phi, 5, mode='reflect') # controlling smoothness
 
     #-9.849 < x < 7.8675
