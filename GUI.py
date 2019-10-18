@@ -1,11 +1,17 @@
 from tkinter import *
 from tkinter.colorchooser import askcolor
 from tkinter import filedialog
+from tkinter import messagebox
 import PIL
 from PIL import ImageTk, Image, ImageDraw
 import cv2
 import numpy as np
 from CellDetectionImage import CellDetectionImage
+import os
+
+nomeArquivoPadraoOuro = 'PO.png'
+guiX = 900
+guiY = 900
 
 # TODO open image
 # TODO select in result image and show original image
@@ -16,7 +22,7 @@ class GUI(object):
 
     def __init__(self):
         self.root = Tk()
-        self.i = 1
+        self.root.filename = "C:\\Users\\lucas\\PycharmProjects\\CellDetectionImage\\Images"
 
         self.menubar = Menu(self.root)
         self.root.config(menu=self.menubar)
@@ -25,10 +31,12 @@ class GUI(object):
         self.filemenu = Menu(self.menubar)
         self.filemenu.add_command(label="Abrir", command=self.open_file)
         self.filemenu.add_command(label="Salvar", command=self.save)
+        self.filemenu.add_command(label="Resetar", command=self.resetImage)
         self.filemenu.add_separator()
         self.filemenu.add_command(label="Sair", command=self.root.quit)
         self.menubar.add_cascade(label="Arquivo", menu=self.filemenu)
 
+        # pen button
         self.pen_button = Button(self.root, text='Pen', command=self.use_pen)
         self.pen_button.grid(row=0, column=0, columnspan=2)
 
@@ -38,35 +46,38 @@ class GUI(object):
         # self.color_button = Button(self.root, text='Color', command=self.choose_color)
         # self.color_button.grid(row=0, column=2, columnspan=2)
 
+        # eraser button
         self.eraser_button = Button(self.root, text='Eraser', command=self.use_eraser)
         self.eraser_button.grid(row=0, column=3)
 
         self.choose_size_button = Scale(self.root, from_=1, to=10, orient=HORIZONTAL)
         self.choose_size_button.grid(row=0, column=4, columnspan=2)
 
-        # TODO execute cellDetectionImage algorithm on image selected
-        #img = Image.open('Images/result-cell-1.png').resize((600, 600), Image.ANTIALIAS)
-        self.img = cv2.imread('Images/1.jpg')
-        self.img = CellDetectionImage(self.img)
-        img1 = cv2.resize(self.img, (600, 600), interpolation=cv2.INTER_AREA)
-        self.imgResult = ImageTk.PhotoImage(Image.fromarray(img1))
-        # self.imgResult = ImageTk.PhotoImage(img)
+        # open first image to iterate
+        #imageCV = Image.open('Images/result-cell-1.png').resize((guiX, guiY), Image.ANTIALIAS)
+        self.imageCV = cv2.imread('Images/first image.png')
+        #self.imageCV = CellDetectionImage(self.imageCV)
 
-        self.label_image = Label(self.root, image=self.imgResult)
+        # modified image in interface
+        imageCV600cell = cv2.resize(self.imageCV, (guiX, guiY), interpolation=cv2.INTER_AREA)
+        self.goldImage = ImageTk.PhotoImage(Image.fromarray(imageCV600cell))
+        # self.goldImage = ImageTk.PhotoImage(imageCV)
+
+        self.label_image = Label(self.root, image=self.goldImage)
         self.label_image.grid(row=1, column=1, columnspan=2)
         self.label_image.bind("<Button>", self.select_area)
 
-        self.imgright = cv2.cvtColor(cv2.imread('Images/' + str(self.i) + '.jpg'), cv2.COLOR_RGB2BGR)
+        self.imgright = np.copy(self.imageCV)
         self.lin, self.col, _ = self.imgright.shape
-        self.imgOriginal = self.imgright.copy()
-        img = Image.open('Images/' + str(self.i) + '.jpg').resize((600, 600), Image.ANTIALIAS)
-        self.imgOrig = ImageTk.PhotoImage(img)
+        self.imgOriginalCV = self.imgright.copy()
+        imageCV600 = Image.open('Images/first image.png').resize((guiX, guiY), Image.ANTIALIAS)
+        self.imgLeft = ImageTk.PhotoImage(imageCV600)
 
-        self.c = Canvas(self.root, bg='white', width=600, height=600, highlightthickness=0)
-        self.c.create_image(0, 0, image=self.imgOrig, anchor=NW)
+        self.c = Canvas(self.root, bg='white', width=guiX, height=guiY, highlightthickness=0)
+        self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
         self.c.grid(row=1, column=3, columnspan=2)
 
-        self.image1 = Image.new("RGB", (600, 600), (0, 0, 0))
+        self.image1 = Image.new("RGB", (guiX, guiY), (0, 0, 0))
         self.image1.getcolors()
         self.draw = ImageDraw.Draw(self.image1)
 
@@ -79,13 +90,19 @@ class GUI(object):
         # self.next_image = Button(self.root, text='Next image', command=self.next_img)
         # self.next_image.grid(row=2, column=4, columnspan=2)
 
-        self.zoom_button = Scale(self.root, from_=1, to=100, orient=VERTICAL)
-        self.zoom_button.grid(row=1, column=5)
+        #TODO ZOOM slider
+        # self.zoom_button = Scale(self.root, from_=1, to=100, orient=VERTICAL)
+        # self.zoom_button.grid(row=1, column=5)
 
         self.btn_apply = Button(self.root, text='Apply', command=self.apply_modification)
         self.btn_apply.grid(row=2, column=3, columnspan=3)
 
-        self.label_image1 = np.zeros([600, 600], dtype=np.uint8)
+        self.label_image1 = np.zeros([guiX, guiY], dtype=np.uint8)
+
+        self.imageInMermory = cv2.cvtColor(self.imageCV, cv2.COLOR_BGR2GRAY)
+        self.imageInMermory[self.imageInMermory>0] = 255
+
+        self.open_file()
 
         self.setup()
         self.translatePortuguese()
@@ -94,25 +111,36 @@ class GUI(object):
     # TODO change the selection
     def apply_modification(self):
         image_saved = self.image1.copy().resize((self.lin, self.col), PIL.Image.ANTIALIAS)
-        image_saved1 = np.array(image_saved)
+        image_saved1 = cv2.cvtColor(np.array(image_saved), cv2.COLOR_BGR2GRAY)
 
-        # pegar a área dentro do contorno
-        image = cv2.cvtColor(image_saved1.copy(), cv2.COLOR_BGR2GRAY)
+        # image_saved1
 
-        con = 0
-        for i in range(600):
-            for j in range(600):
-                if image[i][j] == 255:
-                    if con == 255:
-                        con = 0
-                    else:
-                        con = 255
-                else:
-                    image[i][j] = con
+        ret, thresh = cv2.threshold(image_saved1, 128, 255, 0)
+        contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
-        self.mostra(image)
+        try:
+            for i in range(len(contours)):
+                cv2.drawContours(image_saved1, contours, i, 255, -1)
+        except:
+            messagebox.showerror("Error", "Fechar a area delimitada!")
 
-        self.image1 = Image.new("RGB", (600, 600), (0, 0, 0))
+        # transformar goldImage em imageInMermory + image_saved1
+
+        imgteste = cv2.add(self.imageInMermory, image_saved1)
+
+        self.imageCV = self.individualregioncolor(imgteste)
+        self.imageInMermory = imgteste
+
+        img1 = cv2.resize(self.imageCV, (guiX, guiY), interpolation=cv2.INTER_AREA)
+        self.goldImage = ImageTk.PhotoImage(Image.fromarray(img1))
+        self.label_image.configure(image=self.goldImage)
+
+        self.c.delete(ALL)
+        imageCV600 = Image.open(self.root.filename).resize((guiX, guiY), Image.ANTIALIAS)
+        self.imgLeft = ImageTk.PhotoImage(imageCV600)
+        self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
+
+        self.image1 = Image.new("RGB", (guiX, guiY), (0, 0, 0))
         self.draw = ImageDraw.Draw(self.image1)
 
     def translatePortuguese(self):
@@ -121,39 +149,66 @@ class GUI(object):
         self.btn_apply.config(text="Aplicar")
         self.last_original.config(text="Imagem Original")
 
-    # TODO create a new method to save, because this not work
     def save(self):
-        filename = "my_drawing.jpg"
-        image_saved = self.image1.copy().resize((self.lin, self.col), PIL.Image.ANTIALIAS)
-        image_saved.save(filename)
+        existeOuro = str(self.root.filename)
 
+        for i in range(len(existeOuro) - 1, 0, -1):
+            if existeOuro[i] == '.':
+                existeOuro = existeOuro[:i]
+                break
+
+        existeOuro += nomeArquivoPadraoOuro
+
+        cv2.imwrite(existeOuro, self.imageCV)
+
+    # abre a imagem
     def open_file(self):
-        self.image1 = Image.new("RGB", (600, 600), (0, 0, 0))
+        self.image1 = Image.new("RGB", (guiX, guiY), (0, 0, 0))
         self.draw = ImageDraw.Draw(self.image1)
 
-        self.root.filename = filedialog.askopenfilename(initialdir="/", title="Select file",
+        self.root.filename = filedialog.askopenfilename(initialdir=str(self.root.filename), title="Select file",
                                                    filetypes=(("Images files", "*.png"), ("Images files", "*.jpg"),
                                                               ("All files", "*.*")))
-        self.imgOriginal = cv2.imread(self.root.filename, cv2.COLOR_BGR2RGB)
-        img = Image.open(self.root.filename).resize((600, 600), Image.ANTIALIAS)
-        self.imgOrig = ImageTk.PhotoImage(img)
+        self.imgOriginalCV = cv2.imread(self.root.filename)
+        imageCV600 = Image.open(self.root.filename).resize((guiX, guiY), Image.ANTIALIAS)
+        self.imgLeft = ImageTk.PhotoImage(imageCV600)
 
         self.c.delete(ALL)
-        self.c.create_image(0, 0, image=self.imgOrig, anchor=NW)
+        self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
 
-        # TODO execute cellDetectionImage algorithm on image selected
-        #img = Image.open('Images/load.gif').resize((600, 600), Image.ANTIALIAS)
-        self.img = CellDetectionImage(self.imgOriginal)
-        img1 = cv2.resize(self.img, (600, 600), interpolation=cv2.INTER_AREA)
-        self.imgResult = ImageTk.PhotoImage(Image.fromarray(img1))
-        # self.imgResult = ImageTk.PhotoImage(img)
+        existeOuro = str(self.root.filename)
 
-        self.label_image.configure(image=self.imgResult)
+        for i in range(len(existeOuro)-1, 0, -1):
+            if existeOuro[i] == '.':
+                existeOuro = existeOuro[:i]
+                break
 
+        existeOuro += nomeArquivoPadraoOuro
+
+        messagebox.showinfo("Espere", "Clique em OK e espere o algoritmo de processamento terminar de executar")
+
+        if os.path.exists(existeOuro):
+            self.imageCV = cv2.imread(existeOuro)
+
+        else:
+            #imageCV = Image.open('Images/load.gif').resize((guiX, guiY), Image.ANTIALIAS)
+            self.imageCV = CellDetectionImage(self.imgOriginalCV)
+
+        self.lin, self.col, _ = self.imageCV.shape
+        img1 = cv2.resize(self.imageCV, (guiX, guiY), interpolation=cv2.INTER_AREA)
+        self.goldImage = ImageTk.PhotoImage(Image.fromarray(img1))
+        # self.goldImage = ImageTk.PhotoImage(imageCV)
+
+        self.label_image.configure(image=self.goldImage)
+
+        self.imageInMermory = cv2.cvtColor(self.imageCV, cv2.COLOR_BGR2GRAY)
+        self.imageInMermory[self.imageInMermory > 0] = 255
+
+    # cria a area na imagem da direita para ser editada
     def select_area(self, event):
-        img = self.img.copy()
+        img = self.imageCV.copy()
 
-        self.image1 = Image.new("RGB", (600, 600), (0, 0, 0))
+        self.image1 = Image.new("RGB", (guiX, guiY), (0, 0, 0))
         self.draw = ImageDraw.Draw(self.image1)
 
         try:
@@ -165,16 +220,21 @@ class GUI(object):
         x = event.x
         y = event.y
         y2, x2 = im2.shape
-        areay = int((y2 * y) / 600.0)
-        areax = int((x2 * x) / 600.0)
+        areay = int((y2 * y) / (guiY * 1.0))
+        areax = int((x2 * x) / (guiX * 1.0))
 
-        if im2[areay, areax] < 10:
-            self.imgright = self.imgOriginal.copy()
+        if im2[areay][areax] < 10:
+            self.imgright = self.imgOriginalCV.copy()
 
-            self.imgOrig = ImageTk.PhotoImage(Image.fromarray(self.imgright).resize((600, 600), Image.ANTIALIAS))
+            self.imgright = cv2.cvtColor(self.imgright, cv2.COLOR_BGR2RGB)
+
+            self.imgLeft = ImageTk.PhotoImage(Image.fromarray(self.imgright).resize((guiX, guiY), Image.ANTIALIAS))
+
+            self.imageInMermory = cv2.cvtColor(self.imageCV, cv2.COLOR_BGR2GRAY)
+            self.imageInMermory[self.imageInMermory > 0] = 255
 
             self.c.delete(ALL)
-            self.c.create_image(0, 0, image=self.imgOrig, anchor=NW)
+            self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
 
             print("nao tem nada")
 
@@ -185,27 +245,23 @@ class GUI(object):
 
         area = labels[areay, areax]
 
-        for i in range(y2):
-            for j in range(x2):
-                if area != labels[i, j]:
-                    labels[i, j] = 0
-                else:
-                    labels[i, j] = 1
+        labels[labels != area] = 0
+        labels[labels == area] = 1
 
+        # Colore cada área
         # Map component labels to hue val
         label_hue = np.uint8(179 * labels / np.max(labels))
         blank_ch = 255 * np.ones_like(label_hue)
         labeled_img = cv2.merge([label_hue, blank_ch, blank_ch])
-
         # cvt to BGR for display
         labeled_img = cv2.cvtColor(labeled_img, cv2.COLOR_HSV2BGR)
-
         # set bg label to black
         labeled_img[label_hue == 0] = 0
 
+        # Transforma em escala de cinza
         labeled_img = cv2.cvtColor(labeled_img, cv2.COLOR_BGR2GRAY)
 
-        # get only the largest region = region of interest
+        # get the contour
         ret, thresh = cv2.threshold(labeled_img, 10, 255, 0)
         contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
@@ -213,22 +269,29 @@ class GUI(object):
         lin, col = im2.shape
         im3 = np.zeros([lin, col], dtype=np.uint8)
 
-        cv2.drawContours(im3, contours, -1, 255, 1)
+        cv2.drawContours(im3, contours, -1, 255, -1)
 
-        temp = self.imgOriginal.copy()
+        self.imageInMermory = im2 - im3
+
+        im3 = im3 - im3
+        cv2.drawContours(im3, contours, -1, 255)
+
+        temp = self.imgOriginalCV.copy()
+
+        #self.draw = ImageDraw.Draw(Image.fromarray(im3))
 
         for y in range(lin):
             for x in range(col):
                 if im3[y, x] == 255:
                     temp[y, x] = [255, 255, 255]
-                    self.draw.point((int(x * 600 / y2), y * 600 / x2), fill='white')
+                    self.draw.point((int(x * guiX / y2), y * guiY / x2), fill='white')
 
-        self.imgright = temp
+        self.imgright = cv2.cvtColor(temp, cv2.COLOR_BGR2RGB)
 
-        self.imgOrig = ImageTk.PhotoImage(Image.fromarray(self.imgright).resize((600, 600), Image.ANTIALIAS))
+        self.imgLeft = ImageTk.PhotoImage(Image.fromarray(self.imgright).resize((guiX, guiY), Image.ANTIALIAS))
 
         self.c.delete(ALL)
-        self.c.create_image(0, 0, image=self.imgOrig, anchor=NW)
+        self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
 
     def mostra(self, img, name='Name'):
         cv2.namedWindow(name, cv2.WINDOW_AUTOSIZE)
@@ -238,44 +301,9 @@ class GUI(object):
 
     def original_img(self):
         self.c.delete(ALL)
-        self.c.create_image(0, 0, image=self.imgOrig, anchor=NW)
-
-    def last_img(self):
-        self.i -= 1
-
-        img = Image.open('Images/' + str(self.i) + '.jpg').resize((600, 600), Image.ANTIALIAS)
-        self.imgOrig = ImageTk.PhotoImage(img)
-
-        self.c.delete(ALL)
-        self.c.create_image(0, 0, image=self.imgOrig, anchor=NW)
-
-        img = Image.open('Images/load.gif').resize((600, 600), Image.ANTIALIAS)
-        self.imgResult = ImageTk.PhotoImage(img)
-
-        self.label_image.configure(image=self.imgResult)
-
-    # TODO check the last updated image
-    def next_img(self):
-        self.i += 1
-
-        if self.i > 10:
-            self.end_file()
-            return
-
-        img = Image.open('Images/' + str(self.i) + '.jpg').resize((600, 600), Image.ANTIALIAS)
-        self.imgOrig = ImageTk.PhotoImage(img)
-
-        self.c.delete(ALL)
-        self.c.create_image(0, 0, image=self.imgOrig, anchor=NW)
-
-        # TODO execute cellDetectionImage algorithm on image selected
-        #img = Image.open('Images/imagem segmentada.png').resize((600, 600), Image.ANTIALIAS)
-        self.img = CellDetectionImage(self.imgOriginal)
-        img1 = cv2.resize(self.img, (600, 600), interpolation=cv2.INTER_AREA)
-        self.imgResult = ImageTk.PhotoImage(Image.fromarray(img1))
-        # self.imgResult = ImageTk.PhotoImage(img)
-
-        self.label_image.configure(image=self.imgResult)
+        imageCV600 = Image.open(self.root.filename).resize((guiX, guiY), Image.ANTIALIAS)
+        self.imgLeft = ImageTk.PhotoImage(imageCV600)
+        self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
 
     # TODO configure the exit with a pop-up
     def end_file(self):
@@ -293,9 +321,6 @@ class GUI(object):
 
     def use_pen(self):
         self.activate_button(self.pen_button)
-
-    #def use_brush(self):
-    #    self.activate_button(self.brush_button)
 
     def choose_color(self):
         self.eraser_on = False
@@ -322,6 +347,47 @@ class GUI(object):
 
     def reset(self, event):
         self.old_x, self.old_y = None, None
+
+    def resetImage(self):
+        imageCV600 = Image.open(self.root.filename).resize((guiX, guiY), Image.ANTIALIAS)
+        self.imgLeft = ImageTk.PhotoImage(imageCV600)
+
+        self.c.delete(ALL)
+        self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
+
+        messagebox.showinfo("Espere", "Clique em OK e espere o algoritmo de processamento terminar de executar")
+
+        self.imageCV = CellDetectionImage(self.imgOriginalCV)
+
+        self.lin, self.col, _ = self.imageCV.shape
+        img1 = cv2.resize(self.imageCV, (guiX, guiY), interpolation=cv2.INTER_AREA)
+        self.goldImage = ImageTk.PhotoImage(Image.fromarray(img1))
+        # self.goldImage = ImageTk.PhotoImage(imageCV)
+
+        self.label_image.configure(image=self.goldImage)
+
+    def individualregioncolor(self, im1):
+        try:
+            _, _ = im1.shape
+            im2 = im1
+        except:
+            im2 = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
+
+        im2 = cv2.threshold(im2, 127, 255, cv2.THRESH_BINARY)[1]  # ensure binary
+        ret, labels = cv2.connectedComponents(im2)
+
+        # Map component labels to hue val
+        label_hue = np.uint8(179 * labels / (np.max(labels)))
+        blank_ch = 255 * np.ones_like(label_hue)
+        labeled_img = cv2.merge([label_hue, blank_ch, blank_ch])
+
+        # cvt to BGR for display
+        labeled_img = cv2.cvtColor(labeled_img, cv2.COLOR_HSV2BGR)
+
+        # set bg label to black
+        labeled_img[label_hue == 0] = 0
+
+        return labeled_img
 
 
 if __name__ == '__main__':

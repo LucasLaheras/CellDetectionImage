@@ -11,7 +11,16 @@ def mostra(img, name='Name'):
 
 
 if __name__ == '__main__':
+    for i in range(10):
+        path = 'Images/' + str(i+1) + '.jpg'
 
+        im0 = cv2.imread(path)
+
+        im1 = CellDetectionImage(im0)
+
+        cv2.imwrite('final'+str(i)+'.png', im1)
+    #GUI()
+"""""
     im0 = cv2.imread('Images/3.jpg')
     #im0 = cv2.imread('im_gray.png', 3)
     #im0 = cv2.imread('im_gray.png', 0)
@@ -21,14 +30,7 @@ if __name__ == '__main__':
     cv2.imwrite("final3.png", imResp)
 
 """""
-    for i in range(10):
-        path = 'Images/' + str(i+1) + '.jpg'
 
-        im0 = cv2.imread(path)
-
-        CellDetectionImage(im0, i+1)
-    #GUI()
-"""""
 
 
 

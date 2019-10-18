@@ -113,7 +113,6 @@ def CellDetectionImage(im0):
     # random colorization of the regions of interest
     im_out = individualregioncolor(im5)
 
-    mostra(im_out)
 
     return im_out
 
@@ -191,7 +190,7 @@ def individualregioncolor(im1):
     ret, labels = cv2.connectedComponents(im2)
 
     # Map component labels to hue val
-    label_hue = np.uint8(179 * labels / (np.max(labels)/10))
+    label_hue = np.uint8(179 * labels / (np.max(labels)))
     blank_ch = 255 * np.ones_like(label_hue)
     labeled_img = cv2.merge([label_hue, blank_ch, blank_ch])
 
