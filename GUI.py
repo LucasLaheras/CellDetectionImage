@@ -8,13 +8,28 @@ import cv2
 import numpy as np
 from CellDetectionImage import CellDetectionImage
 import os
+import tkinter as tk
+from tkinter import ttk
 
 nomeArquivoPadraoOuro = 'PO.png'
-guiX = 900
-guiY = 900
+guiX = 600
+guiY = 600
 
-# TODO open image
-# TODO select in result image and show original image
+class AutoScrollbar(ttk.Scrollbar):
+    ''' A scrollbar that hides itself if it's not needed.
+        Works only if you use the grid geometry manager '''
+    def set(self, lo, hi):
+        if float(lo) <= 0.0 and float(hi) >= 1.0:
+            self.grid_remove()
+        else:
+            self.grid()
+        ttk.Scrollbar.set(self, lo, hi)
+
+    def pack(self, **kw):
+        raise tk.TclError('Cannot use pack with this widget')
+
+    def place(self, **kw):
+        raise tk.TclError('Cannot use place with this widget')
 
 class GUI(object):
     DEFAULT_PEN_SIZE = 5.0
@@ -23,6 +38,11 @@ class GUI(object):
     def __init__(self):
         self.root = Tk()
         self.root.filename = "C:\\Users\\lucas\\PycharmProjects\\CellDetectionImage\\Images"
+
+        vbar = AutoScrollbar(self.root, orient='vertical')
+        hbar = AutoScrollbar(self.root, orient='horizontal')
+        vbar.grid(row=1, column=6, sticky='ns')
+        hbar.grid(row=2, column=3, columnspan=2, sticky='we')
 
         self.menubar = Menu(self.root)
         self.root.config(menu=self.menubar)
@@ -38,7 +58,7 @@ class GUI(object):
 
         # pen button
         self.pen_button = Button(self.root, text='Pen', command=self.use_pen)
-        self.pen_button.grid(row=0, column=0, columnspan=2)
+        self.pen_button.grid(row=0, column=0)
 
         # self.brush_button = Button(self.root, text='Brush', command=self.use_brush)
         # self.brush_button.grid(row=0, column=1, columnspan=2)
@@ -48,44 +68,70 @@ class GUI(object):
 
         # eraser button
         self.eraser_button = Button(self.root, text='Eraser', command=self.use_eraser)
-        self.eraser_button.grid(row=0, column=3)
+        self.eraser_button.grid(row=0, column=1)
 
+        # slider size pen and eraser
         self.choose_size_button = Scale(self.root, from_=1, to=10, orient=HORIZONTAL)
-        self.choose_size_button.grid(row=0, column=4, columnspan=2)
+        self.choose_size_button.grid(row=0, column=3)
+
+        # move button
+        self.move_button = Button(self.root, text='Move', command=self.use_move)
+        self.move_button.grid(row=0, column=4)
 
         # open first image to iterate
         #imageCV = Image.open('Images/result-cell-1.png').resize((guiX, guiY), Image.ANTIALIAS)
         self.imageCV = cv2.imread('Images/first image.png')
+        self.lin, self.col, _ = self.imageCV.shape
         #self.imageCV = CellDetectionImage(self.imageCV)
 
         # modified image in interface
-        imageCV600cell = cv2.resize(self.imageCV, (guiX, guiY), interpolation=cv2.INTER_AREA)
-        self.goldImage = ImageTk.PhotoImage(Image.fromarray(imageCV600cell))
+        self.imageCV600cell = cv2.resize(self.imageCV, (guiX, guiY), interpolation=cv2.INTER_AREA)
+        self.goldImage = ImageTk.PhotoImage(Image.fromarray(self.imageCV600cell))
         # self.goldImage = ImageTk.PhotoImage(imageCV)
 
         self.label_image = Label(self.root, image=self.goldImage)
-        self.label_image.grid(row=1, column=1, columnspan=2)
+        self.label_image.grid(row=1, column=0, columnspan=3)
         self.label_image.bind("<Button>", self.select_area)
 
         self.imgright = np.copy(self.imageCV)
-        self.lin, self.col, _ = self.imgright.shape
         self.imgOriginalCV = self.imgright.copy()
-        imageCV600 = Image.open('Images/first image.png').resize((guiX, guiY), Image.ANTIALIAS)
-        self.imgLeft = ImageTk.PhotoImage(imageCV600)
 
-        self.c = Canvas(self.root, bg='white', width=guiX, height=guiY, highlightthickness=0)
-        self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
-        self.c.grid(row=1, column=3, columnspan=2)
-
-        self.image1 = Image.new("RGB", (guiX, guiY), (0, 0, 0))
+        self.image1 = Image.new("RGB", (self.col, self.lin), (0, 0, 0))
         self.image1.getcolors()
         self.draw = ImageDraw.Draw(self.image1)
+
+        self.imscale = 1.0
+        self.imageid = None
+        self.delta = 0.90
+
+        self.c = Canvas(self.root, bg='white', width=guiX, height=guiY, highlightthickness=0,
+                        xscrollcommand=hbar.set, yscrollcommand=vbar.set)
+        self.c.grid(row=1, column=3, columnspan=2, sticky='nswe')
+        self.text = self.c.create_text(0, 0, anchor='nw')
+        self.show_image()
+        #self.imgLeft = ImageTk.PhotoImage(Image.open('Images/first image.png').resize((guiX, guiY), Image.ANTIALIAS))
+
+        #self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
+
+        vbar.configure(command=self.c.yview)  # bind scrollbars to the canvas
+        hbar.configure(command=self.c.xview)
+        # Make the canvas expandable
+        self.root.rowconfigure(0, weight=1)
+        self.root.columnconfigure(0, weight=1)
+        # Bind events to the Canvas
+        self.c.bind('<ButtonPress-1>', self.move_from)
+        self.c.bind('<B1-Motion>', self.move_to)
+        self.c.bind('<MouseWheel>', self.wheel)  # with Windows and MacOS, but not Linux
+        self.c.bind('<Button-5>', self.wheel)  # only with Linux, wheel scroll down
+        self.c.bind('<Button-4>', self.wheel)  # only with Linux, wheel scroll up
+
+        self.c.configure(scrollregion=self.c.bbox('all'))
 
         # self.last_image = Button(self.root, text='Last image', command=self.last_img)
         # self.last_image.grid(row=2, column=0, columnspan=2)
 
         self.last_original = Button(self.root, text='Original image', command=self.original_img)
-        self.last_original.grid(row=2, column=0, columnspan=3)
+        self.last_original.grid(row=3, column=0, columnspan=3)
 
         # self.next_image = Button(self.root, text='Next image', command=self.next_img)
         # self.next_image.grid(row=2, column=4, columnspan=2)
@@ -95,7 +141,7 @@ class GUI(object):
         # self.zoom_button.grid(row=1, column=5)
 
         self.btn_apply = Button(self.root, text='Apply', command=self.apply_modification)
-        self.btn_apply.grid(row=2, column=3, columnspan=3)
+        self.btn_apply.grid(row=3, column=3, columnspan=3)
 
         self.label_image1 = np.zeros([guiX, guiY], dtype=np.uint8)
 
@@ -103,15 +149,63 @@ class GUI(object):
         self.imageInMermory[self.imageInMermory>0] = 255
 
         self.open_file()
+        self.move_on = False
 
         self.setup()
         self.translatePortuguese()
         self.root.mainloop()
 
-    # TODO change the selection
+    def wheel(self, event):
+        ''' Zoom with mouse wheel '''
+        self.c.delete(ALL)
+        scale = 1.0
+        # Respond to Linux (event.num) or Windows (event.delta) wheel event
+        if event.num == 5 or event.delta == -120:
+            scale *= self.delta
+            self.imscale *= self.delta
+        if event.num == 4 or event.delta == 120:
+            scale /= self.delta
+            self.imscale /= self.delta
+        # Rescale all canvas objects
+        x = self.c.canvasx(event.x)
+        y = self.c.canvasy(event.y)
+        self.c.scale('all', x, y, scale, scale)
+        self.show_image()
+        self.c.configure(scrollregion=self.c.bbox('all'))
+
+    def show_image(self):
+        ''' Show image on the Canvas '''
+        if self.imageid:
+            self.c.delete(self.imageid)
+            self.imageid = None
+            self.c.imagetk = None  # delete previous image from the canvas
+        width, height, _ = self.imageCV.shape
+        new_size = int(self.imscale * width), int(self.imscale * height)
+        if new_size[0] < guiX or new_size[1] < guiY:
+            self.imscale /= self.delta
+            new_size = (guiX, guiY)
+        #TODO isso só copia a imagem original (mesclar com a imagem com as bordas)
+        im1 = cv2.cvtColor(self.imgOriginalCV, cv2.COLOR_BGR2RGB)
+        im2 = cv2.cvtColor(np.array(self.image1), cv2.COLOR_BGR2RGB)
+        self.imgright = cv2.add(im1, im2)
+        self.imgright = cv2.resize(self.imgright, new_size)
+
+        imagetk = ImageTk.PhotoImage(Image.fromarray(self.imgright))
+
+        # Use self.text object to set proper coordinates
+        self.imageid = self.c.create_image(0, 0, anchor='nw', image=imagetk)
+        self.c.lower(self.imageid)  # set it into background
+        self.c.imagetk = imagetk  # keep an extra reference to prevent garbage-collection
+
+        #self.goldImage = ImageTk.PhotoImage(Image.fromarray(cv2.resize(self.imageCV, new_size)))
+        #self.label_image.configure(image=self.goldImage)
+
     def apply_modification(self):
-        image_saved = self.image1.copy().resize((self.lin, self.col), PIL.Image.ANTIALIAS)
+        image_saved = self.image1.copy()
         image_saved1 = cv2.cvtColor(np.array(image_saved), cv2.COLOR_BGR2GRAY)
+
+        #self.mostra(image_saved1)
+        #self.mostra(self.imageInMermory)
 
         # image_saved1
 
@@ -136,12 +230,14 @@ class GUI(object):
         self.label_image.configure(image=self.goldImage)
 
         self.c.delete(ALL)
-        imageCV600 = Image.open(self.root.filename).resize((guiX, guiY), Image.ANTIALIAS)
-        self.imgLeft = ImageTk.PhotoImage(imageCV600)
-        self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
+        #imageCV600 = Image.open(self.root.filename).resize((guiX, guiY), Image.ANTIALIAS)
+        #self.imgLeft = ImageTk.PhotoImage(imageCV600)
+        #self.c.create_image(0, 0, image=self.imgLeft, anchor='nw')
 
-        self.image1 = Image.new("RGB", (guiX, guiY), (0, 0, 0))
+        self.image1 = Image.new("RGB", (self.col, self.lin), (0, 0, 0))
         self.draw = ImageDraw.Draw(self.image1)
+
+        self.show_image()
 
     def translatePortuguese(self):
         self.pen_button.config(text="Caneta")
@@ -160,21 +256,26 @@ class GUI(object):
         existeOuro += nomeArquivoPadraoOuro
 
         cv2.imwrite(existeOuro, self.imageCV)
+        messagebox.showinfo("Concluido", "Imagem salva com sucesso")
 
     # abre a imagem
     def open_file(self):
-        self.image1 = Image.new("RGB", (guiX, guiY), (0, 0, 0))
-        self.draw = ImageDraw.Draw(self.image1)
-
         self.root.filename = filedialog.askopenfilename(initialdir=str(self.root.filename), title="Select file",
                                                    filetypes=(("Images files", "*.png"), ("Images files", "*.jpg"),
                                                               ("All files", "*.*")))
-        self.imgOriginalCV = cv2.imread(self.root.filename)
-        imageCV600 = Image.open(self.root.filename).resize((guiX, guiY), Image.ANTIALIAS)
-        self.imgLeft = ImageTk.PhotoImage(imageCV600)
-
         self.c.delete(ALL)
-        self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
+        self.imgOriginalCV = cv2.imread(self.root.filename)
+        self.imgright = self.imgOriginalCV.copy
+        self.lin, self.col, _ = self.imgOriginalCV.shape
+
+        self.image1 = Image.new("RGB", (self.col, self.lin), (0, 0, 0))
+        self.draw = ImageDraw.Draw(self.image1)
+
+        #imageCV600 = Image.open(self.root.filename).resize((guiX, guiY), Image.ANTIALIAS)
+        #self.imgLeft = ImageTk.PhotoImage(imageCV600)
+        self.show_image()
+
+        #self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
 
         existeOuro = str(self.root.filename)
 
@@ -194,7 +295,6 @@ class GUI(object):
             #imageCV = Image.open('Images/load.gif').resize((guiX, guiY), Image.ANTIALIAS)
             self.imageCV = CellDetectionImage(self.imgOriginalCV)
 
-        self.lin, self.col, _ = self.imageCV.shape
         img1 = cv2.resize(self.imageCV, (guiX, guiY), interpolation=cv2.INTER_AREA)
         self.goldImage = ImageTk.PhotoImage(Image.fromarray(img1))
         # self.goldImage = ImageTk.PhotoImage(imageCV)
@@ -208,7 +308,7 @@ class GUI(object):
     def select_area(self, event):
         img = self.imageCV.copy()
 
-        self.image1 = Image.new("RGB", (guiX, guiY), (0, 0, 0))
+        self.image1 = Image.new("RGB", (self.col, self.lin), (0, 0, 0))
         self.draw = ImageDraw.Draw(self.image1)
 
         try:
@@ -224,18 +324,18 @@ class GUI(object):
         areax = int((x2 * x) / (guiX * 1.0))
 
         if im2[areay][areax] < 10:
+            self.c.delete(ALL)
             self.imgright = self.imgOriginalCV.copy()
 
             self.imgright = cv2.cvtColor(self.imgright, cv2.COLOR_BGR2RGB)
 
-            self.imgLeft = ImageTk.PhotoImage(Image.fromarray(self.imgright).resize((guiX, guiY), Image.ANTIALIAS))
+            #self.imgLeft = ImageTk.PhotoImage(Image.fromarray(self.imgright).resize((guiX, guiY), Image.ANTIALIAS))
+            #self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
 
             self.imageInMermory = cv2.cvtColor(self.imageCV, cv2.COLOR_BGR2GRAY)
             self.imageInMermory[self.imageInMermory > 0] = 255
 
-            self.c.delete(ALL)
-            self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
-
+            self.show_image()
             print("nao tem nada")
 
             return
@@ -274,24 +374,31 @@ class GUI(object):
         self.imageInMermory = im2 - im3
 
         im3 = im3 - im3
+
         cv2.drawContours(im3, contours, -1, 255)
 
-        temp = self.imgOriginalCV.copy()
+        self.image1 = Image.fromarray(cv2.cvtColor(im3, cv2.COLOR_GRAY2BGR))
+
+        self.draw = ImageDraw.Draw(self.image1)
+
+        #temp = self.imgOriginalCV.copy()
 
         #self.draw = ImageDraw.Draw(Image.fromarray(im3))
 
-        for y in range(lin):
-            for x in range(col):
-                if im3[y, x] == 255:
-                    temp[y, x] = [255, 255, 255]
-                    self.draw.point((int(x * guiX / y2), y * guiY / x2), fill='white')
+        #for y in range(lin):
+        #    for x in range(col):
+        #        if im3[y, x] == 255:
+        #            temp[y, x] = [255, 255, 255]
+        #            self.draw.point((int(x * self.col / y2), y * self.lin / x2), fill='white')
 
-        self.imgright = cv2.cvtColor(temp, cv2.COLOR_BGR2RGB)
+        #self.mostra(temp)
+        #self.mostra(np.array(self.image1))
 
-        self.imgLeft = ImageTk.PhotoImage(Image.fromarray(self.imgright).resize((guiX, guiY), Image.ANTIALIAS))
+        #self.imgright = cv2.cvtColor(temp, cv2.COLOR_BGR2RGB)
 
-        self.c.delete(ALL)
-        self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
+        #self.imgLeft = ImageTk.PhotoImage(Image.fromarray(self.imgright).resize((guiX, guiY), Image.ANTIALIAS))
+        #self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
+        self.show_image()
 
     def mostra(self, img, name='Name'):
         cv2.namedWindow(name, cv2.WINDOW_AUTOSIZE)
@@ -301,9 +408,17 @@ class GUI(object):
 
     def original_img(self):
         self.c.delete(ALL)
-        imageCV600 = Image.open(self.root.filename).resize((guiX, guiY), Image.ANTIALIAS)
-        self.imgLeft = ImageTk.PhotoImage(imageCV600)
-        self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
+        #imageCV600 = Image.open(self.root.filename).resize((guiX, guiY), Image.ANTIALIAS)
+        #self.imgLeft = ImageTk.PhotoImage(imageCV600)
+        #self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
+        self.image1 = Image.new("RGB", (self.col, self.lin), (0, 0, 0))
+        self.draw = ImageDraw.Draw(self.image1)
+
+        self.show_image()
+
+        self.imageInMermory = cv2.cvtColor(self.imageCV, cv2.COLOR_BGR2GRAY)
+        self.imageInMermory[self.imageInMermory > 0] = 255
+
 
     # TODO configure the exit with a pop-up
     def end_file(self):
@@ -319,14 +434,29 @@ class GUI(object):
         self.c.bind('<B1-Motion>', self.paint)
         self.c.bind('<ButtonRelease-1>', self.reset)
 
+    def move_from(self, event):
+        ''' Remember previous coordinates for scrolling with the mouse '''
+        self.c.scan_mark(event.x, event.y)
+
+    def move_to(self, event):
+        ''' Drag (move) canvas to the new position '''
+        self.c.scan_dragto(event.x, event.y, gain=1)
+
+    def use_move(self):
+        self.move_on = True
+        self.activate_button(self.move_button)
+
     def use_pen(self):
+        self.move_on = False
         self.activate_button(self.pen_button)
 
     def choose_color(self):
+        self.move_on = False
         self.eraser_on = False
         self.color = askcolor(color=self.color)[1]
 
     def use_eraser(self):
+        self.move_on = False
         self.activate_button(self.eraser_button, eraser_mode=True)
 
     def activate_button(self, some_button, eraser_mode=False):
@@ -337,23 +467,43 @@ class GUI(object):
 
     def paint(self, event):
         self.line_width = self.choose_size_button.get()
+        if self.move_on:
+            self.move_to(event)
+            return
         paint_color = 'black' if self.eraser_on else 'white'
+
+        # convert from window coordinates to canvas coordinates
+        x = self.c.canvasx(event.x)
+        y = self.c.canvasy(event.y)
+
+        colRight, linRight, _ = self.imgright.shape
+
+        #TODO funcionar no zoom
         if self.old_x and self.old_y:
-            self.c.create_line(self.old_x, self.old_y, event.x, event.y, width=self.line_width, fill=paint_color,
+            self.c.create_line(self.old_x, self.old_y, x, y, width=self.line_width, fill=paint_color,
                                capstyle=ROUND, smooth=TRUE, splinesteps=36)
-            self.draw.line((self.old_x, self.old_y, event.x, event.y), fill=paint_color, width=self.choose_size_button.get())
-        self.old_x = event.x
-        self.old_y = event.y
+            #print((self.old_x, self.old_y))
+            #print((event.x, event.y))
+            self.draw.line((self.lin*self.old_x/linRight, self.col*self.old_y/colRight, self.lin*x/linRight, self.col*y//colRight), fill=paint_color, width=self.line_width)
+        self.old_x = x
+        self.old_y = y
 
     def reset(self, event):
         self.old_x, self.old_y = None, None
+        self.c.delete(ALL)
+        self.show_image()
 
     def resetImage(self):
-        imageCV600 = Image.open(self.root.filename).resize((guiX, guiY), Image.ANTIALIAS)
-        self.imgLeft = ImageTk.PhotoImage(imageCV600)
-
         self.c.delete(ALL)
-        self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
+
+        #imageCV600 = Image.open(self.root.filename).resize((guiX, guiY), Image.ANTIALIAS)
+        #self.imgLeft = ImageTk.PhotoImage(imageCV600)
+        #self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
+
+        self.image1 = Image.new("RGB", (self.col, self.lin), (0, 0, 0))
+        self.draw = ImageDraw.Draw(self.image1)
+
+        self.show_image()
 
         messagebox.showinfo("Espere", "Clique em OK e espere o algoritmo de processamento terminar de executar")
 
