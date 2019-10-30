@@ -2,7 +2,6 @@ from tkinter import *
 from tkinter.colorchooser import askcolor
 from tkinter import filedialog
 from tkinter import messagebox
-import PIL
 from PIL import ImageTk, Image, ImageDraw
 import cv2
 import numpy as np
@@ -10,10 +9,13 @@ from CellDetectionImage import CellDetectionImage
 import os
 import tkinter as tk
 from tkinter import ttk
+from circular_queue import CircularQueue
 
 nomeArquivoPadraoOuro = 'PO.png'
 guiX = 600
 guiY = 600
+number_last_images = 10
+cont_images = 0
 
 class AutoScrollbar(ttk.Scrollbar):
     ''' A scrollbar that hides itself if it's not needed.
@@ -39,10 +41,12 @@ class GUI(object):
         self.root = Tk()
         self.root.filename = "C:\\Users\\lucas\\PycharmProjects\\CellDetectionImage\\Images"
 
+        self.timeline = CircularQueue()
+
         vbar = AutoScrollbar(self.root, orient='vertical')
         hbar = AutoScrollbar(self.root, orient='horizontal')
-        vbar.grid(row=1, column=6, sticky='ns')
-        hbar.grid(row=2, column=3, columnspan=2, sticky='we')
+        vbar.grid(row=2, column=6, sticky='ns')
+        hbar.grid(row=3, column=3, columnspan=2, sticky='we')
 
         self.menubar = Menu(self.root)
         self.root.config(menu=self.menubar)
@@ -58,7 +62,7 @@ class GUI(object):
 
         # pen button
         self.pen_button = Button(self.root, text='Pen', command=self.use_pen)
-        self.pen_button.grid(row=0, column=0)
+        self.pen_button.grid(row=1, column=0)
 
         # self.brush_button = Button(self.root, text='Brush', command=self.use_brush)
         # self.brush_button.grid(row=0, column=1, columnspan=2)
@@ -68,15 +72,15 @@ class GUI(object):
 
         # eraser button
         self.eraser_button = Button(self.root, text='Eraser', command=self.use_eraser)
-        self.eraser_button.grid(row=0, column=1)
+        self.eraser_button.grid(row=1, column=1)
 
         # slider size pen and eraser
         self.choose_size_button = Scale(self.root, from_=1, to=10, orient=HORIZONTAL)
-        self.choose_size_button.grid(row=0, column=3)
+        self.choose_size_button.grid(row=1, column=3)
 
         # move button
         self.move_button = Button(self.root, text='Move', command=self.use_move)
-        self.move_button.grid(row=0, column=4)
+        self.move_button.grid(row=1, column=4)
 
         # open first image to iterate
         #imageCV = Image.open('Images/result-cell-1.png').resize((guiX, guiY), Image.ANTIALIAS)
@@ -90,7 +94,7 @@ class GUI(object):
         # self.goldImage = ImageTk.PhotoImage(imageCV)
 
         self.label_image = Label(self.root, image=self.goldImage)
-        self.label_image.grid(row=1, column=0, columnspan=3)
+        self.label_image.grid(row=2, column=0, columnspan=3)
         self.label_image.bind("<Button>", self.select_area)
 
         self.imgright = np.copy(self.imageCV)
@@ -106,7 +110,7 @@ class GUI(object):
 
         self.c = Canvas(self.root, bg='white', width=guiX, height=guiY, highlightthickness=0,
                         xscrollcommand=hbar.set, yscrollcommand=vbar.set)
-        self.c.grid(row=1, column=3, columnspan=2, sticky='nswe')
+        self.c.grid(row=2, column=3, columnspan=2, sticky='nswe')
         self.text = self.c.create_text(0, 0, anchor='nw')
         self.show_image()
         #self.imgLeft = ImageTk.PhotoImage(Image.open('Images/first image.png').resize((guiX, guiY), Image.ANTIALIAS))
@@ -131,7 +135,7 @@ class GUI(object):
         # self.last_image.grid(row=2, column=0, columnspan=2)
 
         self.last_original = Button(self.root, text='Original image', command=self.original_img)
-        self.last_original.grid(row=3, column=0, columnspan=3)
+        self.last_original.grid(row=4, column=0, columnspan=3)
 
         # self.next_image = Button(self.root, text='Next image', command=self.next_img)
         # self.next_image.grid(row=2, column=4, columnspan=2)
@@ -141,7 +145,14 @@ class GUI(object):
         # self.zoom_button.grid(row=1, column=5)
 
         self.btn_apply = Button(self.root, text='Apply', command=self.apply_modification)
-        self.btn_apply.grid(row=3, column=3, columnspan=3)
+        self.btn_apply.grid(row=4, column=3, columnspan=3)
+
+
+        self.btn_undo = Button(self.root, text='UNDO', command=self.undo)
+        self.btn_undo.grid(row=0, column=0)
+
+        self.btn_redo = Button(self.root, text='REDO', command=self.redo)
+        self.btn_redo.grid(row=0, column=1)
 
         self.label_image1 = np.zeros([guiX, guiY], dtype=np.uint8)
 
@@ -209,6 +220,8 @@ class GUI(object):
 
         # image_saved1
 
+        self.last_modifications = [None] * number_last_images
+
         ret, thresh = cv2.threshold(image_saved1, 128, 255, 0)
         contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
@@ -238,6 +251,7 @@ class GUI(object):
         self.draw = ImageDraw.Draw(self.image1)
 
         self.show_image()
+        self.timeline.enqueue(self.image1.copy())
 
     def translatePortuguese(self):
         self.pen_button.config(text="Caneta")
@@ -264,6 +278,8 @@ class GUI(object):
                                                    filetypes=(("Images files", "*.png"), ("Images files", "*.jpg"),
                                                               ("All files", "*.*")))
         self.c.delete(ALL)
+        self.timeline.clear_all()
+
         self.imgOriginalCV = cv2.imread(self.root.filename)
         self.imgright = self.imgOriginalCV.copy
         self.lin, self.col, _ = self.imgOriginalCV.shape
@@ -274,6 +290,8 @@ class GUI(object):
         #imageCV600 = Image.open(self.root.filename).resize((guiX, guiY), Image.ANTIALIAS)
         #self.imgLeft = ImageTk.PhotoImage(imageCV600)
         self.show_image()
+
+        self.last_modifications = [None] * number_last_images
 
         #self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
 
@@ -303,6 +321,8 @@ class GUI(object):
 
         self.imageInMermory = cv2.cvtColor(self.imageCV, cv2.COLOR_BGR2GRAY)
         self.imageInMermory[self.imageInMermory > 0] = 255
+
+        self.timeline.enqueue(self.image1.copy())
 
     # cria a area na imagem da direita para ser editada
     def select_area(self, event):
@@ -373,7 +393,7 @@ class GUI(object):
 
         self.imageInMermory = im2 - im3
 
-        im3 = im3 - im3
+        im3 = np.zeros([lin, col], dtype=np.uint8)
 
         cv2.drawContours(im3, contours, -1, 255)
 
@@ -400,6 +420,8 @@ class GUI(object):
         #self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
         self.show_image()
 
+        self.timeline.enqueue(self.image1.copy())
+
     def mostra(self, img, name='Name'):
         cv2.namedWindow(name, cv2.WINDOW_AUTOSIZE)
         cv2.imshow(name, img)
@@ -413,6 +435,8 @@ class GUI(object):
         #self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
         self.image1 = Image.new("RGB", (self.col, self.lin), (0, 0, 0))
         self.draw = ImageDraw.Draw(self.image1)
+
+        self.timeline.enqueue(self.image1.copy())
 
         self.show_image()
 
@@ -491,10 +515,29 @@ class GUI(object):
     def reset(self, event):
         self.old_x, self.old_y = None, None
         self.c.delete(ALL)
+        self.last_modifications[cont_images] = self.image1.copy()
+        self.show_image()
+        self.timeline.enqueue(self.image1.copy())
+
+    def undo(self):
+        self.image1 = self.timeline.last().copy()
+        self.draw = ImageDraw.Draw(self.image1)
+
+        self.c.delete(ALL)
+        self.show_image()
+
+    def redo(self):
+        self.image1 = self.timeline.next().copy()
+        self.draw = ImageDraw.Draw(self.image1)
+
+        self.c.delete(ALL)
         self.show_image()
 
     def resetImage(self):
         self.c.delete(ALL)
+        self.timeline.clear_all()
+
+        self.last_modifications = [None] * number_last_images
 
         #imageCV600 = Image.open(self.root.filename).resize((guiX, guiY), Image.ANTIALIAS)
         #self.imgLeft = ImageTk.PhotoImage(imageCV600)
@@ -515,6 +558,8 @@ class GUI(object):
         # self.goldImage = ImageTk.PhotoImage(imageCV)
 
         self.label_image.configure(image=self.goldImage)
+
+        self.timeline.enqueue(self.image1.copy())
 
     def individualregioncolor(self, im1):
         try:
