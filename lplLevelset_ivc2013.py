@@ -1,9 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import snake as sn
 import cv2
-import math
-import scipy
 from math import pi
 
 

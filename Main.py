@@ -1,7 +1,5 @@
 from CellDetectionImage import CellDetectionImage
 import cv2
-import numpy as np
-from GUI import GUI
 
 def mostra(img, name='Name'):
     cv2.namedWindow(name, cv2.WINDOW_AUTOSIZE)
