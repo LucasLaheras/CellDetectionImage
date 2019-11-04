@@ -5,8 +5,6 @@ from matplotlib import pyplot as plt
 from lplFirefly import lplFirefly
 from psrMultiLimiarizacao import psrMultiLimiarizacao
 from lplLevelset_ivc2013 import lpllevelset_ivc2013
-import random
-from scipy import ndimage
 
 
 def histeq(im, nbr_bins=256):
@@ -47,9 +45,18 @@ def CellDetectionImage(im0):
     H = np.around(H, decimals=4)
 
     # H = cv2.equalizeHist(im1)
+    # get the parameters in file
+    f = open("parameters firefly", "r")
+    n = int(f.readline())
+    d = int(f.readline())
+    gamma = float(f.readline())
+    alpha = float(f.readline())
+    beta = float(f.readline())
+    maxGeneration = int(f.readline())
+    f.close()
 
     # binary segmentation with firefly
-    bests = lplFirefly(150, 3, 1, 0.97, 1, 100, H)
+    bests = lplFirefly(n, d, gamma, alpha, beta, maxGeneration, H)
     #bests = [211, 225, 250]
 
     # print(bests)
