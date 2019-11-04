@@ -12,10 +12,11 @@ from tkinter import ttk
 from circular_queue import CircularQueue
 
 nomeArquivoPadraoOuro = 'PO.png'
-guiX = 600
-guiY = 600
+guiX = 650
+guiY = 650
 number_last_images = 10
 cont_images = 0
+
 
 class AutoScrollbar(ttk.Scrollbar):
     ''' A scrollbar that hides itself if it's not needed.
@@ -32,6 +33,7 @@ class AutoScrollbar(ttk.Scrollbar):
 
     def place(self, **kw):
         raise tk.TclError('Cannot use place with this widget')
+
 
 class GUI(object):
     DEFAULT_PEN_SIZE = 5.0
@@ -79,8 +81,8 @@ class GUI(object):
         self.choose_size_button.grid(row=1, column=3)
 
         # move button
-        self.move_button = Button(self.root, text='Move', command=self.use_move)
-        self.move_button.grid(row=1, column=4)
+        self.btn_move = Button(self.root, text='Move', command=self.use_move)
+        self.btn_move.grid(row=1, column=4)
 
         # open first image to iterate
         #imageCV = Image.open('Images/result-cell-1.png').resize((guiX, guiY), Image.ANTIALIAS)
@@ -109,7 +111,7 @@ class GUI(object):
         self.delta = 0.90
 
         self.c = Canvas(self.root, bg='white', width=guiX, height=guiY, highlightthickness=0,
-                        xscrollcommand=hbar.set, yscrollcommand=vbar.set)
+                        xscrollcommand=hbar.set, yscrollcommand=vbar.set, cursor="pencil")
         self.c.grid(row=2, column=3, columnspan=2, sticky='nswe')
         self.text = self.c.create_text(0, 0, anchor='nw')
         self.show_image()
@@ -137,6 +139,11 @@ class GUI(object):
         self.last_original = Button(self.root, text='Original image', command=self.original_img)
         self.last_original.grid(row=4, column=0, columnspan=3)
 
+        # slider size of area
+        self.choose_area = Scale(self.root, from_=0, to=80, orient=HORIZONTAL, command=self.remove_area, length=300)
+        self.choose_area.grid(row=3, column=0)
+
+
         # self.next_image = Button(self.root, text='Next image', command=self.next_img)
         # self.next_image.grid(row=2, column=4, columnspan=2)
 
@@ -147,7 +154,6 @@ class GUI(object):
         self.btn_apply = Button(self.root, text='Apply', command=self.apply_modification)
         self.btn_apply.grid(row=4, column=3, columnspan=3)
 
-
         self.btn_undo = Button(self.root, text='UNDO', command=self.undo)
         self.btn_undo.grid(row=0, column=0)
 
@@ -157,7 +163,7 @@ class GUI(object):
         self.label_image1 = np.zeros([guiX, guiY], dtype=np.uint8)
 
         self.imageInMermory = cv2.cvtColor(self.imageCV, cv2.COLOR_BGR2GRAY)
-        self.imageInMermory[self.imageInMermory>0] = 255
+        self.imageInMermory[self.imageInMermory > 0] = 255
 
         self.open_file()
         self.move_on = False
@@ -238,9 +244,10 @@ class GUI(object):
         self.imageCV = self.individualregioncolor(imgteste)
         self.imageInMermory = imgteste
 
-        img1 = cv2.resize(self.imageCV, (guiX, guiY), interpolation=cv2.INTER_AREA)
-        self.goldImage = ImageTk.PhotoImage(Image.fromarray(img1))
-        self.label_image.configure(image=self.goldImage)
+        #img1 = cv2.resize(self.imageCV, (guiX, guiY), interpolation=cv2.INTER_AREA)
+        #self.goldImage = ImageTk.PhotoImage(Image.fromarray(img1))
+        #self.label_image.configure(image=self.goldImage)
+        self.remove_area(None)
 
         self.c.delete(ALL)
         #imageCV600 = Image.open(self.root.filename).resize((guiX, guiY), Image.ANTIALIAS)
@@ -258,6 +265,9 @@ class GUI(object):
         self.eraser_button.config(text="Borracha")
         self.btn_apply.config(text="Aplicar")
         self.last_original.config(text="Imagem Original")
+        self.btn_redo.config(text="Refazer")
+        self.btn_undo.config(text="Desfazer")
+        self.btn_move.config(text="Mover")
 
     def save(self):
         existeOuro = str(self.root.filename)
@@ -269,7 +279,7 @@ class GUI(object):
 
         existeOuro += nomeArquivoPadraoOuro
 
-        cv2.imwrite(existeOuro, self.imageCV)
+        cv2.imwrite(existeOuro, self.remove_area(None))
         messagebox.showinfo("Concluido", "Imagem salva com sucesso")
 
     # abre a imagem
@@ -279,6 +289,7 @@ class GUI(object):
                                                               ("All files", "*.*")))
         self.c.delete(ALL)
         self.timeline.clear_all()
+        self.choose_area.set(0)
 
         self.imgOriginalCV = cv2.imread(self.root.filename)
         self.imgright = self.imgOriginalCV.copy
@@ -313,11 +324,13 @@ class GUI(object):
             #imageCV = Image.open('Images/load.gif').resize((guiX, guiY), Image.ANTIALIAS)
             self.imageCV = CellDetectionImage(self.imgOriginalCV)
 
-        img1 = cv2.resize(self.imageCV, (guiX, guiY), interpolation=cv2.INTER_AREA)
-        self.goldImage = ImageTk.PhotoImage(Image.fromarray(img1))
+        #img1 = cv2.resize(self.imageCV, (guiX, guiY), interpolation=cv2.INTER_AREA)
+        #self.goldImage = ImageTk.PhotoImage(Image.fromarray(img1))
         # self.goldImage = ImageTk.PhotoImage(imageCV)
 
-        self.label_image.configure(image=self.goldImage)
+        #self.label_image.configure(image=self.goldImage)
+
+        self.remove_area(None)
 
         self.imageInMermory = cv2.cvtColor(self.imageCV, cv2.COLOR_BGR2GRAY)
         self.imageInMermory[self.imageInMermory > 0] = 255
@@ -401,23 +414,6 @@ class GUI(object):
 
         self.draw = ImageDraw.Draw(self.image1)
 
-        #temp = self.imgOriginalCV.copy()
-
-        #self.draw = ImageDraw.Draw(Image.fromarray(im3))
-
-        #for y in range(lin):
-        #    for x in range(col):
-        #        if im3[y, x] == 255:
-        #            temp[y, x] = [255, 255, 255]
-        #            self.draw.point((int(x * self.col / y2), y * self.lin / x2), fill='white')
-
-        #self.mostra(temp)
-        #self.mostra(np.array(self.image1))
-
-        #self.imgright = cv2.cvtColor(temp, cv2.COLOR_BGR2RGB)
-
-        #self.imgLeft = ImageTk.PhotoImage(Image.fromarray(self.imgright).resize((guiX, guiY), Image.ANTIALIAS))
-        #self.c.create_image(0, 0, image=self.imgLeft, anchor=NW)
         self.show_image()
 
         self.timeline.enqueue(self.image1.copy())
@@ -443,11 +439,6 @@ class GUI(object):
         self.imageInMermory = cv2.cvtColor(self.imageCV, cv2.COLOR_BGR2GRAY)
         self.imageInMermory[self.imageInMermory > 0] = 255
 
-
-    # TODO configure the exit with a pop-up
-    def end_file(self):
-        self.root.destroy()
-
     def setup(self):
         self.old_x = None
         self.old_y = None
@@ -467,10 +458,13 @@ class GUI(object):
         self.c.scan_dragto(event.x, event.y, gain=1)
 
     def use_move(self):
+        self.c.config(cursor="fleur")
         self.move_on = True
-        self.activate_button(self.move_button)
+        self.activate_button(self.btn_move)
 
     def use_pen(self):
+        self.c.config(cursor="pencil")
+        self.choose_size_button.set(1)
         self.move_on = False
         self.activate_button(self.pen_button)
 
@@ -480,6 +474,8 @@ class GUI(object):
         self.color = askcolor(color=self.color)[1]
 
     def use_eraser(self):
+        self.c.config(cursor="dotbox")
+        self.choose_size_button.set(5)
         self.move_on = False
         self.activate_button(self.eraser_button, eraser_mode=True)
 
@@ -502,7 +498,6 @@ class GUI(object):
 
         colRight, linRight, _ = self.imgright.shape
 
-        #TODO funcionar no zoom
         if self.old_x and self.old_y:
             self.c.create_line(self.old_x, self.old_y, x, y, width=self.line_width, fill=paint_color,
                                capstyle=ROUND, smooth=TRUE, splinesteps=36)
@@ -553,11 +548,13 @@ class GUI(object):
         self.imageCV = CellDetectionImage(self.imgOriginalCV)
 
         self.lin, self.col, _ = self.imageCV.shape
-        img1 = cv2.resize(self.imageCV, (guiX, guiY), interpolation=cv2.INTER_AREA)
-        self.goldImage = ImageTk.PhotoImage(Image.fromarray(img1))
+        #img1 = cv2.resize(self.imageCV, (guiX, guiY), interpolation=cv2.INTER_AREA)
+        #self.goldImage = ImageTk.PhotoImage(Image.fromarray(img1))
         # self.goldImage = ImageTk.PhotoImage(imageCV)
 
-        self.label_image.configure(image=self.goldImage)
+        #self.label_image.configure(image=self.goldImage)
+
+        self.remove_area(None)
 
         self.timeline.enqueue(self.image1.copy())
 
@@ -572,7 +569,7 @@ class GUI(object):
         ret, labels = cv2.connectedComponents(im2)
 
         # Map component labels to hue val
-        label_hue = np.uint8(179 * labels / (np.max(labels)))
+        label_hue = np.uint8(179 * labels / ((np.max(labels))))
         blank_ch = 255 * np.ones_like(label_hue)
         labeled_img = cv2.merge([label_hue, blank_ch, blank_ch])
 
@@ -584,6 +581,30 @@ class GUI(object):
 
         return labeled_img
 
+    def remove_area(self, event):
+        im1 = cv2.cvtColor(self.imageCV, cv2.COLOR_BGR2GRAY)
+        ret, thresh = cv2.threshold(im1, 1, 255, 0)
+        contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+
+        # separates only the region of interest
+        lin, col = im1.shape
+        im3 = np.zeros([lin, col], dtype=np.uint8)
+
+        small = self.choose_area.get()
+
+        for i in range(1, len(contours)):
+            if small <= len(contours[i]):
+                im3 = cv2.drawContours(im3, contours, i, 255, -1)
+
+        im3 = self.individualregioncolor(im3)
+
+        img1 = cv2.resize(im3, (guiX, guiY), interpolation=cv2.INTER_AREA)
+        self.goldImage = ImageTk.PhotoImage(Image.fromarray(img1))
+        # self.goldImage = ImageTk.PhotoImage(imageCV)
+
+        self.label_image.configure(image=self.goldImage)
+
+        return im3
 
 if __name__ == '__main__':
     GUI()
