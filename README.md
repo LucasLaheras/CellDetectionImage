@@ -4,7 +4,8 @@ Interface gráfica feita no TKinter para seleção de padrão ouro de imagens de
 
 ## Execução
 - Certifique-se se está instalado a versão 3.6 ou posterior do Pyhton.
-- Instale os seguintes pacotes: **TKinter**, **PIL**, **numpy** e **opencv-python**.
+- Instale os seguintes pacotes: **TKinter**, **PIL**, **numpy** e **opencv-python**. Isso pode ser feito usando PIP ou 
+qualquer outro gerenciador de pacotes do Python.
 - Execute o arquivo GUI.py com o comando `python GUI.py` no terminal ou cmd.
 
 ## Como Utilizar
