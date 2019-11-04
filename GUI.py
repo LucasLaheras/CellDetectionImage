@@ -63,7 +63,7 @@ class GUI(object):
         self.menubar.add_cascade(label="Arquivo", menu=self.filemenu)
 
         # pen button
-        self.pen_button = Button(self.root, text='Pen', command=self.use_pen)
+        self.pen_button = Button(self.root, text='Pen', command=self.use_pen, relief=SUNKEN)
         self.pen_button.grid(row=1, column=0)
 
         # self.brush_button = Button(self.root, text='Brush', command=self.use_brush)

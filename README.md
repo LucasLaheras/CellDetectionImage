@@ -1,15 +1,29 @@
 # CellDetectionImage
-Interface gráfica feita no TKinter para segmentação de imagens médicas e biológicas usando algoritmos bio-inspirados
+Interface gráfica feita no TKinter para seleção de padrão ouro de imagens de segmentação de imagens médicas e biológicas
+ usando algoritmos bio-inspirados para auxiliar com a seleção.
 
-# Execução
-- Certifique-se se está instalado a versão 3.6 do Pyhton.
-- Instale os seguintes pacotes: TKinter, numpy, PIL, ITK e opencv-python.
-- Execute o arquivo Main.py.
+## Execução
+- Certifique-se se está instalado a versão 3.6 ou posterior do Pyhton.
+- Instale os seguintes pacotes: **TKinter**, **PIL**, **numpy** e **opencv-python**.
+- Execute o arquivo GUI.py com o comando `python GUI.py` no terminal ou cmd.
 
-# Como Utilizar
+## Como Utilizar
 
-![alt text](Images/InterfaceGrafica.png)
+![alt text](ReadmeImages/GUI_indicator.png)
+<br>
 
-Para utilizar as funções da interface é preciso clicar na imagem da esquerda na região que está segmentada de forma errada e com _mouse_ passar por cima da área da imagem à direita com a opção caneta ou borracha selecionada (A e B da Figura) e após concluído clicar em "Aplicar" (botão referente a letra F na Figura), assim, modificando a imagem da esquerda para obter a segmentação correta. A barra de rolagem C determina o tamanho da borracha ou caneta selecionada. O botão E altera a imagem da esquerda para a imagem que foi inicialmente gerada pelo algorítimo. Para facilitar para o usuário demarcar a região, está sendo implementada a função de zoom da imagem utilizando a barra de rolagem D.
+Ao executar, selecione uma imagem do banco de dados. Espere até o algoritmo ser executado, por usar algoritmo 
+bio-inspirado e level set a imagem gerada pode demorar, principalmente se a imagem for muito grande.<br>
 
-
+Clique na área que está selecionada errada da imagem da esquerda, com isso aparecerá na imagem da direita o contorno da 
+mesma, selecione entre a **caneta** e **borracha** para alterar a área. É possível selecionar o tamanho da ferramenta 
+selecionada (borracha ou caneta) usando a escala representada pela letra **F** na imagem. Para ter maior precisão é possível
+ dar **zoom** na imagem da direita usando gesto de pinça no trackpad ou o scroll do meio do mouse.  Caso tenha feio algum 
+ traço errado é possível **desfazer** ou **refazer** os últimos traços. <br>
+ 
+Quando a área estiver corrigida, clicar no botão **aplicar** jogar as áreas corrigidas na imagem da esquerda, caso uma área 
+se interseccione a outra da imagem da esquerda elas irão se unir. Se a imagem estiver com muito ruído com o scroll **H** é 
+possível remover as regiões com áreas de menor tamanho. Quando terminado a segmentação de toda a imagem clicar em 
+Arquivo>>**Salvar** e a imagem será salva na mesma pasta que a original, com o nome original concatenado com “PO.png”. Caso 
+o usuário queira refazer a seleção a partir da imagem gerada pelo algoritmo desenvolvido, clicar em Arquivo>>**Resetar**.
+ 
