@@ -1,6 +1,6 @@
 # CellDetectionImage
-Interface gráfica feita no TKinter para seleção de padrão ouro de imagens de segmentação de imagens médicas e biológicas
- usando algoritmos bio-inspirados para auxiliar com a seleção.
+Interface gráfica feita no TKinter para o usuário selecionar a segmentação ideal de imagens médicas e biológicas, com o 
+auxiliio de algoritmos bio-inspirados e level sets.
 
 ## Execução
 - Certifique-se se está instalado a versão 3.6 ou posterior do Pyhton.
