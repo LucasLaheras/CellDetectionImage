@@ -3,14 +3,14 @@ import math
 import numpy as np
 
 
-def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
+def lplFirefly(n, d, gamma, alpha, beta, maxGeneration, H):
     """"
     :param n: number of agents
     :param d: dimension
     :param gamma: absorption coefficient
     :param alpha: step of motion
     :param beta: attractivity factor
-    :param maxGenerarion: number of max generation
+    :param maxGeneration: number of max generation
     :param H: histogram
     """
 
@@ -35,7 +35,7 @@ def lplFirefly(n, d, gamma, alpha, beta, maxGenerarion, H):
 
     Z = [0]*n
 
-    while t < maxGenerarion:  # Start itarations
+    while t < maxGeneration:  # Start itarations
         for i in range(n):
             Z[i] = -psrAvaliacaoShannon(H, fireflies[i])
 
