@@ -4,6 +4,7 @@ from psrGrayHistogram import psrGrayHistogram
 from lplFirefly import lplFirefly
 from psrMultiLimiarizacao import psrMultiLimiarizacao
 from lplLevelset_ivc2013 import lpllevelset_ivc2013
+import random
 
 
 def histeq(im, nbr_bins=256):
@@ -140,19 +141,6 @@ def unique(image):
             print(i)
 
 
-def histograma(image):
-
-    hist, bins = np.histogram(image.flatten(), 256, [0, 256])
-    cdf = hist.cumsum()
-
-    cdf_normalized = cdf * (hist.max() / cdf.max())
-    plt.plot(cdf_normalized, 'b')
-    plt.hist(image.flatten(), 256, [0, 256], 'r')
-    plt.xlim([0, 256])
-    plt.legend(('cdf', 'histogram'), 'upper left')
-    plt.show()
-
-
 def mostra(img, name='Name'):
     img1 = img.copy()
 
@@ -192,21 +180,21 @@ def individualregioncolor(im1):
     except:
         im2 = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
 
-    im2 = cv2.threshold(im2, 127, 255, cv2.THRESH_BINARY)[1]  # ensure binary
-    ret, labels = cv2.connectedComponents(im2)
+        # identifies each area separately
+    ret, thresh = cv2.threshold(im2, 127, 255, 0)
+    contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
-    # Map component labels to hue val
-    label_hue = np.uint8(179 * labels / (np.max(labels)))
-    blank_ch = 255 * np.ones_like(label_hue)
-    labeled_img = cv2.merge([label_hue, blank_ch, blank_ch])
+    # creates an array of the same size
+    lin, col = im2.shape
+    im3 = np.zeros([lin, col], dtype=np.uint8)
+    im3 = cv2.cvtColor(im3, cv2.COLOR_GRAY2RGB)
 
-    # cvt to BGR for display
-    labeled_img = cv2.cvtColor(labeled_img, cv2.COLOR_HSV2BGR)
+    # color each area with a randomly generated RGB color
+    for i in range(1, len(contours)):
+        cv2.drawContours(im3, contours, i,
+                         ((random.randint(100, 255)), random.randint(20, 255), random.randint(20, 255)), -1)
 
-    # set bg label to black
-    labeled_img[label_hue == 0] = 0
-
-    return labeled_img
+    return im3
 
 
 def histLocalEq(msk, im0):

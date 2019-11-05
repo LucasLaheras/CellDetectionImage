@@ -10,6 +10,7 @@ import os
 import tkinter as tk
 from tkinter import ttk
 from circular_queue import CircularQueue
+import random
 
 nomeArquivoPadraoOuro = 'PO.png'
 guiX = 650
@@ -217,8 +218,8 @@ class GUI(object):
         image_saved = self.image1.copy()
         image_saved1 = cv2.cvtColor(np.array(image_saved), cv2.COLOR_BGR2GRAY)
 
-        #self.mostra(image_saved1)
-        #self.mostra(self.imageInMermory)
+        self.mostra(image_saved1)
+        self.mostra(self.imageInMermory)
 
         # image_saved1
 
@@ -236,10 +237,11 @@ class GUI(object):
         # transformar goldImage em imageInMermory + image_saved1
 
         imgteste = cv2.add(self.imageInMermory, image_saved1)
+        self.mostra(imgteste)
 
 
         self.imageCV = self.individualregioncolor(imgteste)
-        #self.mostra(self.imageCV)
+        self.mostra(self.imageCV)
         self.imageInMermory = imgteste
 
         #img1 = cv2.resize(self.imageCV, (guiX, guiY), interpolation=cv2.INTER_AREA)
@@ -563,21 +565,21 @@ class GUI(object):
         except:
             im2 = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
 
-        im2 = cv2.threshold(im2, 127, 255, cv2.THRESH_BINARY)[1]  # ensure binary
-        ret, labels = cv2.connectedComponents(im2)
+            # identifies each area separately
+        ret, thresh = cv2.threshold(im2, 127, 255, 0)
+        contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
-        # Map component labels to hue val
-        label_hue = np.uint8(179 * labels / ((np.max(labels))))
-        blank_ch = 255 * np.ones_like(label_hue)
-        labeled_img = cv2.merge([label_hue, blank_ch, blank_ch])
+        # creates an array of the same size
+        lin, col = im2.shape
+        im3 = np.zeros([lin, col], dtype=np.uint8)
+        im3 = cv2.cvtColor(im3, cv2.COLOR_GRAY2RGB)
 
-        # cvt to BGR for display
-        labeled_img = cv2.cvtColor(labeled_img, cv2.COLOR_HSV2BGR)
+        # color each area with a randomly generated RGB color
+        for i in range(1, len(contours)):
+            cv2.drawContours(im3, contours, i,
+                             ((random.randint(100, 255)), random.randint(20, 255), random.randint(20, 255)), -1)
 
-        # set bg label to black
-        labeled_img[label_hue == 0] = 0
-
-        return labeled_img
+        return im3
 
     def remove_area(self, event):
         im1 = cv2.cvtColor(self.imageCV, cv2.COLOR_BGR2GRAY)
