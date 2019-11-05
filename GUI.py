@@ -217,8 +217,8 @@ class GUI(object):
         image_saved = self.image1.copy()
         image_saved1 = cv2.cvtColor(np.array(image_saved), cv2.COLOR_BGR2GRAY)
 
-        self.mostra(image_saved1)
-        self.mostra(self.imageInMermory)
+        #self.mostra(image_saved1)
+        #self.mostra(self.imageInMermory)
 
         # image_saved1
 
@@ -239,7 +239,7 @@ class GUI(object):
 
 
         self.imageCV = self.individualregioncolor(imgteste)
-        self.mostra(self.imageCV)
+        #self.mostra(self.imageCV)
         self.imageInMermory = imgteste
 
         #img1 = cv2.resize(self.imageCV, (guiX, guiY), interpolation=cv2.INTER_AREA)
