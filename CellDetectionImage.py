@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 from psrGrayHistogram import psrGrayHistogram
-from matplotlib import pyplot as plt
 from lplFirefly import lplFirefly
 from psrMultiLimiarizacao import psrMultiLimiarizacao
 from lplLevelset_ivc2013 import lpllevelset_ivc2013

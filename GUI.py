@@ -147,10 +147,6 @@ class GUI(object):
         # self.next_image = Button(self.root, text='Next image', command=self.next_img)
         # self.next_image.grid(row=2, column=4, columnspan=2)
 
-        #TODO ZOOM slider
-        # self.zoom_button = Scale(self.root, from_=1, to=100, orient=VERTICAL)
-        # self.zoom_button.grid(row=1, column=5)
-
         self.btn_apply = Button(self.root, text='Apply', command=self.apply_modification)
         self.btn_apply.grid(row=4, column=3, columnspan=3)
 
@@ -201,7 +197,7 @@ class GUI(object):
         if new_size[0] < guiX or new_size[1] < guiY:
             self.imscale /= self.delta
             new_size = (guiX, guiY)
-        #TODO isso só copia a imagem original (mesclar com a imagem com as bordas)
+
         im1 = cv2.cvtColor(self.imgOriginalCV, cv2.COLOR_BGR2RGB)
         im2 = cv2.cvtColor(np.array(self.image1), cv2.COLOR_BGR2RGB)
         self.imgright = cv2.add(im1, im2)
@@ -221,8 +217,8 @@ class GUI(object):
         image_saved = self.image1.copy()
         image_saved1 = cv2.cvtColor(np.array(image_saved), cv2.COLOR_BGR2GRAY)
 
-        #self.mostra(image_saved1)
-        #self.mostra(self.imageInMermory)
+        self.mostra(image_saved1)
+        self.mostra(self.imageInMermory)
 
         # image_saved1
 
@@ -241,7 +237,9 @@ class GUI(object):
 
         imgteste = cv2.add(self.imageInMermory, image_saved1)
 
+
         self.imageCV = self.individualregioncolor(imgteste)
+        self.mostra(self.imageCV)
         self.imageInMermory = imgteste
 
         #img1 = cv2.resize(self.imageCV, (guiX, guiY), interpolation=cv2.INTER_AREA)
