@@ -499,7 +499,7 @@ class GUI(object):
         colRight, linRight, _ = self.imgright.shape
 
         if self.old_x and self.old_y:
-            self.c.create_line(self.old_x, self.old_y, x, y, width=self.line_width, fill=paint_color,
+            self.c.create_line(self.old_x, self.old_y, x, y, width=self.line_width*(linRight/self.lin), fill=paint_color,
                                capstyle=ROUND, smooth=TRUE, splinesteps=36)
             #print((self.old_x, self.old_y))
             #print((event.x, event.y))
