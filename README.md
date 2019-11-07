@@ -1,6 +1,6 @@
 # CellDetectionImage
 Interface gráfica feita no TKinter para o usuário selecionar a segmentação ideal de imagens médicas e biológicas, com o 
-auxiliio de algoritmos bio-inspirados e level sets.
+auxílio de algoritmos bio-inspirados e level sets.
 
 ## Execução
 - Certifique-se se está instalado a versão 3.6 ou posterior do Pyhton.
