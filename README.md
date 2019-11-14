@@ -3,6 +3,10 @@ Interface gráfica feita no TKinter para o usuário selecionar a segmentação i
 auxílio de algoritmos bio-inspirados e level sets.
 
 ## Execução
+- Abra o arquivo dist/GUI e execute o arquivo GUI.exe.<br>
+
+OU
+
 - Certifique-se se está instalado a versão 3.6 ou posterior do Pyhton.
 - Instale os seguintes pacotes: **TKinter**, **PIL**, **numpy** e **opencv-python**. Isso pode ser feito usando PIP ou 
 qualquer outro gerenciador de pacotes do Python.
