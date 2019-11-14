@@ -32,7 +32,7 @@ def CellDetectionImage(im0):
     # global histogrammic equalization
     im1 = lplHisteq(im1)
 
-    cv2.imwrite('histeq.png', im1)
+    #cv2.imwrite('histeq.png', im1)
     #im1 = cv2.equalizeHist(im1)
     #im1, _ = histeq(im1)
     #print(np.unique(im1))

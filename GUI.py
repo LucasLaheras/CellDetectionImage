@@ -42,7 +42,7 @@ class GUI(object):
 
     def __init__(self):
         self.root = Tk()
-        self.root.filename = "C:\\Users\\lucas\\PycharmProjects\\CellDetectionImage\\Images"
+        self.root.filename = "/"
 
         self.timeline = CircularQueue()
 
