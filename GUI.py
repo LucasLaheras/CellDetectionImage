@@ -13,8 +13,6 @@ from circular_queue import CircularQueue
 import random
 
 nomeArquivoPadraoOuro = 'PO.png'
-guiX = 650
-guiY = 650
 number_last_images = 10
 cont_images = 0
 
@@ -42,6 +40,9 @@ class GUI(object):
 
     def __init__(self):
         self.root = Tk()
+        global guiX, guiY
+        guiY = int(self.root.winfo_screenheight() - 250)
+        guiX = int(guiY)
         self.root.filename = "/"
 
         self.timeline = CircularQueue()
@@ -286,7 +287,7 @@ class GUI(object):
     def open_file(self):
         self.root.filename = filedialog.askopenfilename(initialdir=str(self.root.filename), title="Select file",
                                                    filetypes=(("Images files", "*.png"), ("Images files", "*.jpg"),
-                                                              ("All files", "*.*")))
+                                                              ("Images files", ".tif"), ("All files", "*.*")))
         self.c.delete(ALL)
         self.timeline.clear_all()
         self.choose_area.set(0)

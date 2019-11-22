@@ -1,5 +1,5 @@
 ('C:\\Users\\lucas\\PycharmProjects\\CellDetectionImage\\build\\GUI\\GUI.exe',
- True,
+ False,
  False,
  True,
  None,
@@ -45,7 +45,7 @@
  [],
  False,
  False,
- 1573691128,
- [('run.exe',
-   'c:\\users\\lucas\\appdata\\local\\programs\\python\\python36\\lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit\\run.exe',
+ 1574451523,
+ [('runw.exe',
+   'c:\\users\\lucas\\appdata\\local\\programs\\python\\python36\\lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit\\runw.exe',
    'EXECUTABLE')])
