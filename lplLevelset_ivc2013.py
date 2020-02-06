@@ -99,6 +99,8 @@ def lpllevelset_ivc2013(*args):
 
     imgfilt = cv2.resize(imgfilt, img.shape)
 
+    imgfilt = np.transpose(imgfilt)
+
     #mostra(imageCV)
 
     imgfilt = cv2.subtract(imgfilt, img, dtype=cv2.CV_64F)
